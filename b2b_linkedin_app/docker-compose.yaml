@@ -1,0 +1,128 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: b2b_linkedin_app_web
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - logs:/app/logs
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db
+      - redis
+      - celery
+      - beat
+      - rabbitmq
+    command: >
+      sh -c "
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8001
+      "
+    working_dir: /app
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: always
+
+  captcha_watcher:
+    build:
+      context: ./captcha_watcher
+      dockerfile: Dockerfile
+    container_name: captcha_watcher
+    volumes:
+      - ./shared_volume:/app/shared_volume
+      - ./cookies:/app/cookies
+    environment:
+      - DISPLAY=${DISPLAY}
+    network_mode: host
+    restart: always
+
+  celery:
+    build:
+      context: .
+    container_name: b2b_linkedin_app_celery
+    command: celery -A b2b_linkedin_app worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    working_dir: /app
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: always
+
+  beat:
+    build:
+      context: .
+    container_name: b2b_linkedin_app_beat
+    command: celery -A b2b_linkedin_app beat --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    working_dir: /app
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: always
+
+  db:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5433:5432"
+
+  redis:
+    image: redis:7.0.15
+    container_name: redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    restart: always
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+
+volumes:
+  logs:
+  redisdata:
+  postgres_data:
