@@ -1,4 +1,3 @@
-# Updated captcha_watcher/Dockerfile - Add noVNC web client
 FROM python:3.11-slim
 
 # Install system dependencies
@@ -10,13 +9,13 @@ RUN apt-get update && apt-get install -y \
   gnupg tigervnc-standalone-server \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Chrome
+# Install Google Chrome
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt-get update && \
     apt-get install -y ./google-chrome-stable_current_amd64.deb || apt-get -f install -y && \
     rm ./google-chrome-stable_current_amd64.deb
 
-# Install noVNC for web-based VNC access
+# Install noVNC + websockify
 RUN git clone https://github.com/novnc/noVNC.git /opt/novnc && \
     git clone https://github.com/novnc/websockify /opt/novnc/utils/websockify && \
     ln -s /opt/novnc/vnc.html /opt/novnc/index.html
@@ -24,24 +23,30 @@ RUN git clone https://github.com/novnc/noVNC.git /opt/novnc && \
 # Set working directory
 WORKDIR /app
 
-# Copy the entire project
+# Copy project
 COPY . /app
 
-# Install Python dependencies from main project
+# Copy our custom auto_connect.html to noVNC directory
+RUN cp /app/captcha_watcher/assets/auto_connect.html /opt/novnc/auto_connect.html
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# VNC setup - create directory for root user
-RUN mkdir -p /root/.vnc && \
-    echo "password" | vncpasswd -f > /root/.vnc/passwd && \
-    chmod 600 /root/.vnc/passwd
-
-# Copy supervisor config
+# Supervisor config
 COPY captcha_watcher/supervisord.conf /etc/supervisord.conf
 
-# Create shared volume directory
+# Create shared dirs
 RUN mkdir -p /app/shared_volume /app/cookies
 
-# Expose both VNC and noVNC ports
+# Set permissions
+RUN chmod -R 755 /opt/novnc && \
+    chmod 644 /opt/novnc/auto_connect.html
+
+# Expose ports
 EXPOSE 5900 6080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD curl -f http://localhost:6080/ || exit 1
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]

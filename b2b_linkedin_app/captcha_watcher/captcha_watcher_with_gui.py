@@ -70,15 +70,20 @@ def resolve_with_gui(email):
     EMAIL = creds.get("email", "unknown")
     PASSWORD = creds.get("password", "unknown")
     
-    print(f"\n{'='*60}")
-    print(f"🔐 GUI CAPTCHA RESOLUTION")
-    print(f"{'='*60}")
+    print(f"\n{'='*70}")
+    print(f"🔐 GUI CAPTCHA RESOLUTION STARTED")
+    print(f"{'='*70}")
     print(f"📧 Target Email: {email}")
     print(f"📧 Using Email: {EMAIL[:3]}***@{EMAIL.split('@')[1] if '@' in EMAIL else 'domain'}")
     print(f"🌐 Opening GUI browser...")
-    print(f"📺 Connect via VNC to localhost:5900")
-    print(f"🔒 VNC Password: password")
-    print(f"{'='*60}")
+    print(f"")
+    print(f"🖥️  VNC ACCESS OPTIONS:")
+    print(f"   📺 Auto-Connect: http://localhost:6080/auto_connect.html")
+    print(f"   🔧 Manual: http://localhost:6080/vnc.html")
+    print(f"   📁 Directory: http://localhost:6080/")
+    print(f"")
+    print(f"💡 NO PASSWORD REQUIRED - VNC auto-connects!")
+    print(f"{'='*70}")
     
     try:
         # Create visible browser (works with VNC)
@@ -91,6 +96,7 @@ def resolve_with_gui(email):
         options.add_argument('--disable-software-rasterizer')
         options.add_argument('--disable-web-security')
         options.add_argument('--allow-running-insecure-content')
+        options.add_argument('--start-maximized')
         # NO headless - this creates visible window in VNC
         
         print(f"🚀 Starting Chrome browser...")
@@ -124,19 +130,21 @@ def resolve_with_gui(email):
             print(f"⚠️  Could not pre-fill form: {form_error}")
         
         print(f"")
-        print(f"📺 VNC INSTRUCTIONS:")
-        print(f"   1. Open VNC Viewer on your computer")
-        print(f"   2. Connect to: localhost:5900")
-        print(f"   3. Enter password: password")
-        print(f"   4. You'll see Chrome with LinkedIn login")
-        print(f"   5. Credentials are pre-filled - just solve captcha/click login")
-        print(f"   6. Wait for successful login to LinkedIn")
+        print(f"📋 VNC INSTRUCTIONS:")
+        print(f"   1. Open: http://localhost:6080/auto_connect.html")
+        print(f"   2. Wait for auto-connection (no password needed)")
+        print(f"   3. You'll see Chrome with LinkedIn login page")
+        print(f"   4. Solve any captcha or security challenge")
+        print(f"   5. Click 'Sign in' button (credentials are pre-filled)")
+        print(f"   6. Wait for successful login to LinkedIn feed")
         print(f"")
-        print(f"⏰ Auto-monitoring for completion...")
+        print(f"⏰ System is monitoring for completion...")
+        print(f"🕐 Timeout: 10 minutes")
+        print(f"{'='*70}")
         
         # Monitor for successful login
         max_wait = 600  # 10 minutes
-        check_interval = 20  # Check every 20 seconds
+        check_interval = 15  # Check every 15 seconds
         start_time = time.time()
         
         while time.time() - start_time < max_wait:
@@ -144,9 +152,9 @@ def resolve_with_gui(email):
                 current_url = driver.current_url
                 
                 # Check if successfully logged in
-                success_indicators = ['feed', 'sales', 'mynetwork', 'in/']
+                success_indicators = ['feed', 'sales', 'mynetwork', 'in/', '/home']
                 if any(indicator in current_url.lower() for indicator in success_indicators):
-                    print(f"🎉 SUCCESS! Login completed!")
+                    print(f"\n🎉 SUCCESS! Login completed!")
                     print(f"📍 Final URL: {current_url}")
                     break
                 
@@ -154,10 +162,10 @@ def resolve_with_gui(email):
                 if any(indicator in current_url.lower() for indicator in ['login', 'checkpoint', 'challenge']):
                     elapsed = time.time() - start_time
                     remaining = (max_wait - elapsed) / 60
-                    print(f"⏰ Still on login page... {remaining:.1f} min remaining")
+                    print(f"⏰ Still resolving captcha... {remaining:.1f} min remaining")
                     print(f"📍 Current: {current_url}")
                 else:
-                    print(f"🔍 Navigating... Current URL: {current_url}")
+                    print(f"🔍 Navigation detected... Current URL: {current_url}")
                 
                 time.sleep(check_interval)
                 
@@ -169,10 +177,10 @@ def resolve_with_gui(email):
         # Final status check and cookie saving
         try:
             final_url = driver.current_url
-            success_indicators = ['feed', 'sales', 'mynetwork', 'in/']
+            success_indicators = ['feed', 'sales', 'mynetwork', 'in/', '/home']
             
             if any(indicator in final_url.lower() for indicator in success_indicators):
-                print(f"💾 Login successful! Saving cookies...")
+                print(f"\n💾 Login successful! Saving cookies...")
                 
                 # Save cookies for the EMAIL that was actually used
                 cookie_path = f"./cookies/linkedin_cookies_{EMAIL}.pkl"
@@ -185,14 +193,20 @@ def resolve_with_gui(email):
                     save_cookies(driver, cookie_path_requested)
                     print(f"✅ Cookies also saved for requested email: {cookie_path_requested}")
                 
+                print(f"🎯 CAPTCHA RESOLUTION COMPLETED SUCCESSFULLY!")
+                
             else:
-                print(f"⚠️  Login may not be complete")
+                print(f"\n⚠️  Login timeout or incomplete")
                 print(f"📍 Final URL: {final_url}")
+                print(f"💡 You can manually complete login in VNC if needed")
                 
         except Exception as save_error:
             print(f"❌ Error saving cookies: {save_error}")
         
-        print(f"🔒 Closing browser...")
+        print(f"\n🔒 Closing browser in 30 seconds...")
+        print(f"💡 This gives you time to see the final result")
+        time.sleep(30)
+        
         driver.quit()
         
         # Mark as resolved
@@ -212,24 +226,45 @@ def resolve_with_gui(email):
 
 def watch_loop():
     """Enhanced watch loop with GUI support"""
-    print("🔍 GUI CAPTCHA WATCHER STARTED")
-    print("📺 VNC Server should be running on port 5900")
-    print("🔒 VNC Password: password")
+    print(f"\n{'='*70}")
+    print(f"🔍 GUI CAPTCHA WATCHER STARTED")
+    print(f"{'='*70}")
+    print(f"📺 VNC Server running on port 5900")
+    print(f"🌐 noVNC Web Interface on port 6080")
+    print(f"🔓 No password required (auto-connect enabled)")
+    print(f"")
+    print(f"🖥️  Access URLs:")
+    print(f"   📺 Auto-Connect: http://localhost:6080/auto_connect.html")
+    print(f"   🔧 Manual: http://localhost:6080/vnc.html")
+    print(f"   📁 Directory: http://localhost:6080/")
+    print(f"{'='*70}")
     
     # Show credential info on startup
     try:
-        credential = Credential()
-        print(f"📊 Credential manager initialized")
-        # Don't call get_credentials() here as it marks one as used
         if os.path.exists('credentials.json'):
             with open('credentials.json', 'r') as f:
                 all_creds = json.load(f)
                 valid_count = sum(1 for c in all_creds if c.get('status', 'valid') == 'valid')
-                print(f"📈 Available credentials: {valid_count}/{len(all_creds)} valid")
+                total_count = len(all_creds)
+                print(f"📈 Available credentials: {valid_count}/{total_count} valid")
+                
+                # Show some valid emails (partially masked)
+                valid_emails = [c.get('email', '') for c in all_creds if c.get('status', 'valid') == 'valid'][:5]
+                if valid_emails:
+                    print(f"📧 Valid emails sample:")
+                    for email in valid_emails:
+                        masked = f"{email[:3]}***@{email.split('@')[1] if '@' in email else 'domain'}"
+                        print(f"   - {masked}")
+                    if len(valid_emails) == 5 and valid_count > 5:
+                        print(f"   ... and {valid_count - 5} more")
+                print(f"")
     except Exception as debug_error:
         print(f"⚠️  Could not check credentials: {debug_error}")
     
-    print("Watching for captcha resolution requests...")
+    print("👀 Watching for captcha resolution requests...")
+    print("💤 Waiting for login attempts that trigger captcha...")
+    print("")
+    
     processed = set()
 
     while True:
@@ -240,9 +275,13 @@ def watch_loop():
                     
                 for email in lines:
                     if email and email not in processed:
-                        print(f"\n🎯 NEW CAPTCHA REQUEST: {email}")
+                        print(f"\n{'🎯' * 20}")
+                        print(f"🚨 NEW CAPTCHA REQUEST: {email}")
+                        print(f"{'🎯' * 20}")
                         resolve_with_gui(email)
                         processed.add(email)
+                        print(f"{'✅' * 20}")
+                        print(f"")
                         
                 # Clean up processed entries
                 if lines:
@@ -254,7 +293,9 @@ def watch_loop():
             time.sleep(10)
             
         except KeyboardInterrupt:
-            print("\n👋 GUI Captcha watcher stopped")
+            print(f"\n{'='*70}")
+            print(f"👋 GUI Captcha watcher stopped by user")
+            print(f"{'='*70}")
             break
         except Exception as e:
             print(f"❌ Error in main loop: {e}")
