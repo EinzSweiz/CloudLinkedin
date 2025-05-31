@@ -1,0 +1,340 @@
+<!-- templates/captcha/solve_captcha_browser.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Solve LinkedIn Captcha - {{ email }}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0066cc, #004499);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .header .email {
+            margin: 10px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        
+        .instructions ol {
+            color: #856404;
+            line-height: 1.6;
+        }
+        
+        .captcha-frame {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            height: 600px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.pending {
+            background: #cff4fc;
+            color: #055160;
+            border: 1px solid #b6effb;
+        }
+        
+        #timer {
+            font-size: 18px;
+            font-weight: bold;
+            color: #dc3545;
+            text-align: center;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .captcha-frame {
+                height: 500px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 LinkedIn Captcha Resolution</h1>
+            <div class="email">Account: {{ email }}</div>
+        </div>
+        
+        <div class="content">
+            <div class="instructions">
+                <h3>📋 Instructions:</h3>
+                <ol>
+                    <li>The LinkedIn captcha page is loaded in the frame below</li>
+                    <li>Complete any captcha or security challenge</li>
+                    <li>Enter your login credentials if required</li>
+                    <li>Wait until you see the LinkedIn feed or profile page</li>
+                    <li>Click "Captcha Resolved" when successfully logged in</li>
+                    <li>Click "Failed" if you cannot resolve the captcha</li>
+                </ol>
+            </div>
+            
+            <div id="timer">⏰ Time remaining: <span id="countdown">10:00</span></div>
+            
+            <iframe 
+                src="/admin/captcha/iframe/?session={{ session_id }}" 
+                class="captcha-frame"
+                id="captcha-frame">
+            </iframe>
+            
+            <div class="controls">
+                <button class="btn btn-success" onclick="markResolved()">
+                    ✅ Captcha Resolved
+                </button>
+                <button class="btn btn-danger" onclick="markFailed()">
+                    ❌ Failed
+                </button>
+                <button class="btn btn-secondary" onclick="refreshFrame()">
+                    🔄 Refresh
+                </button>
+            </div>
+            
+            <div id="status" class="status pending">
+                ⏳ Waiting for captcha resolution...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const sessionId = '{{ session_id }}';
+        let startTime = Date.now();
+        let maxTime = 10 * 60 * 1000; // 10 minutes
+        
+        function updateTimer() {
+            let elapsed = Date.now() - startTime;
+            let remaining = Math.max(0, maxTime - elapsed);
+            
+            if (remaining === 0) {
+                document.getElementById('countdown').textContent = '00:00';
+                showStatus('Timeout reached', 'error');
+                return;
+            }
+            
+            let minutes = Math.floor(remaining / 60000);
+            let seconds = Math.floor((remaining % 60000) / 1000);
+            
+            document.getElementById('countdown').textContent = 
+                minutes.toString().padStart(2, '0') + ':' + 
+                seconds.toString().padStart(2, '0');
+        }
+        
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        function markResolved() {
+            fetch('/admin/captcha/api/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    action: 'resolved'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('✅ Captcha marked as resolved! You can close this window.', 'success');
+                    setTimeout(() => {
+                        window.close();
+                    }, 3000);
+                } else {
+                    showStatus('❌ Error marking captcha as resolved', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showStatus('❌ Network error', 'error');
+            });
+        }
+        
+        function markFailed() {
+            fetch('/admin/captcha/api/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    action: 'failed'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Captcha marked as failed', 'error');
+                    setTimeout(() => {
+                        window.close();
+                    }, 3000);
+                } else {
+                    showStatus('❌ Error marking captcha as failed', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showStatus('❌ Network error', 'error');
+            });
+        }
+        
+        function refreshFrame() {
+            document.getElementById('captcha-frame').src = 
+                `/admin/captcha/iframe/?session=${sessionId}&t=${Date.now()}`;
+            showStatus('Frame refreshed', 'pending');
+        }
+        
+        // Start timer
+        setInterval(updateTimer, 1000);
+        updateTimer();
+        
+        // Auto-check status every 30 seconds
+        setInterval(() => {
+            fetch('/admin/captcha/api/')
+                .then(response => response.json())
+                .then(data => {
+                    // Check if our session is still pending
+                    if (!data.sessions || !data.sessions[sessionId]) {
+                        showStatus('Session completed or expired', 'success');
+                    }
+                })
+                .catch(error => {
+                    console.error('Status check error:', error);
+                });
+        }, 30000);
+    </script>
+</body>
+</html>

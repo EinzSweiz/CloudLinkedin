@@ -18,11 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from payments.urls import urlpatterns as payment_urls
+from parser_controler.urls import urlpatterns as parser_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('authorization.urls')),
     path('payment/', include(payment_urls)),
     path('login/', auth_views.LoginView.as_view(), name='login'),  # встроенный шаблон
+    path("", include(parser_urls)),
 
 ]

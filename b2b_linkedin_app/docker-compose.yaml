@@ -33,15 +33,21 @@ services:
 
   captcha_watcher:
     build:
-      context: ./captcha_watcher
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: captcha_watcher/Dockerfile
     container_name: captcha_watcher
+    ports:
+      - "5900:5900"  # VNC port
+      - "6080:6080"  # noVNC web port
     volumes:
       - ./shared_volume:/app/shared_volume
       - ./cookies:/app/cookies
+      - .:/app
     environment:
-      - DISPLAY=${DISPLAY}
-    network_mode: host
+      - DISPLAY=:0
+      - PYTHONPATH=/app
+    env_file:
+      - .env
     restart: always
 
   celery:
@@ -120,7 +126,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
 
 volumes:
   logs:

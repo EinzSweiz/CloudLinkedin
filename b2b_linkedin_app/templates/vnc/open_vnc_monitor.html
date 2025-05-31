@@ -1,0 +1,10 @@
+<script>
+    (function autoOpenVNC() {
+        let vncWindow = window.open("http://localhost:6080/vnc.html", "_blank");
+        setInterval(() => {
+            if (!vncWindow || vncWindow.closed) {
+                vncWindow = window.open("http://localhost:6080/vnc.html", "_blank");
+            }
+        }, 10000);
+    })();
+</script>
