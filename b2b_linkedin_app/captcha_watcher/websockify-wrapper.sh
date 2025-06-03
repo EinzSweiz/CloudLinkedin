@@ -4,6 +4,12 @@ WEBSOCKIFY_PID_FILE="/tmp/websockify.pid"
 WEBSOCKIFY_PORT=6080
 VNC_PORT=5900
 
+LOCK_FILE="/tmp/websockify.lock"
+exec 200>$LOCK_FILE
+flock -n 200 || {
+    echo "❌ Another instance is already running, exiting."
+    exit 1
+}
 cleanup() {
     echo "🧹 Cleaning up websockify processes..."
     if [ -f "$WEBSOCKIFY_PID_FILE" ]; then
