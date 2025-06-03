@@ -25,12 +25,26 @@ def ensure_vnc_ready(timeout=30):
     print("\n⏳ Waiting for noVNC to become available on port 6080...")
     for i in range(timeout):
         try:
+            # Check both VNC and websockify
+            with socket.create_connection(("localhost", 5900), timeout=1):
+                print("✅ VNC (5900) is accessible")
             with socket.create_connection(("localhost", 6080), timeout=1):
-                print("\u2705 noVNC is accessible on port 6080")
+                print("✅ noVNC (6080) is accessible")
+                
+                # Also check if display is available
+                display = os.environ.get('DISPLAY')
+                print(f"✅ DISPLAY environment variable: {display}")
+                
+                # Check if Chrome can be launched
+                result = os.system("which google-chrome")
+                if result == 0:
+                    print("✅ Chrome binary found")
+                
                 return True
-        except:
+        except Exception as e:
+            print(f"⏳ Waiting... ({i+1}/{timeout}): {e}")
             time.sleep(1)
-    print("\u274c Timeout waiting for noVNC on port 6080")
+    print("❌ Timeout waiting for services")
     return False
 
 def find_credentials_for_email(target_email):
@@ -90,11 +104,14 @@ def resolve_with_gui(email):
     
     try:
         # Create visible browser (works with VNC) - ENHANCED OPTIONS
+        os.environ['DISPLAY'] = ':0'
         options = Options()
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-blink-features=AutomationControlled')
         options.add_argument('--window-size=1200,800')
+        options.add_argument('--window-position=0,0')
+        options.add_argument('--display=:0')
         options.add_argument('--disable-gpu')
         options.add_argument('--disable-software-rasterizer')
         options.add_argument('--disable-web-security')

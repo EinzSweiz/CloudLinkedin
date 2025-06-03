@@ -41,6 +41,8 @@ RUN apt-get update && apt-get install -y \
     dbus \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y netcat-openbsd
+
 # 2) Установка Google Chrome
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt-get update && \

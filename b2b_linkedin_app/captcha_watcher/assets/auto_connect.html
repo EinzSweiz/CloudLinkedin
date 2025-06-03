@@ -255,7 +255,7 @@
                 // и, по умолчанию, слушает WS-запросы на “/websockify” или просто “/”,
                 // в зависимости от версии. На современных сборках noVNC достаточно слать запросы на “/”.
                 // Поэтому в URL мы не указываем “/websockify”, а просто:
-                const url = `${protocol}//${host}:${port}/`;
+                const url = `${protocol}//${host}:${port}/websockify`;
 
                 console.log(`Attempting VNC connection to: ${url}`);
 
