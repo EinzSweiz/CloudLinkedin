@@ -38,6 +38,7 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     netcat-openbsd \
     dbus-x11 \
+    net-tools \
     dbus \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -58,30 +59,14 @@ RUN git clone https://github.com/novnc/noVNC.git /opt/novnc && \
 # 4) Создание Chrome wrapper script
 RUN echo '#!/bin/bash\n\
 export DISPLAY=:0\n\
+export XAUTHORITY=/tmp/.Xauthority\n\
+xhost +local:root\n\
 exec /usr/bin/google-chrome \
     --no-sandbox \
     --disable-dev-shm-usage \
     --disable-gpu \
-    --disable-software-rasterizer \
-    --disable-background-timer-throttling \
-    --disable-backgrounding-occluded-windows \
-    --disable-renderer-backgrounding \
-    --disable-extensions \
-    --disable-plugins \
-    --disable-default-apps \
-    --disable-sync \
-    --disable-translate \
-    --hide-scrollbars \
-    --mute-audio \
-    --no-first-run \
-    --safebrowsing-disable-auto-update \
-    --ignore-certificate-errors \
-    --ignore-ssl-errors \
-    --ignore-certificate-errors-spki-list \
-    --disable-web-security \
-    --disable-features=VizDisplayCompositor \
-    --disable-ipc-flooding-protection \
-    --user-data-dir=/tmp/chrome-profile \
+    --display=:0 \
+    --start-maximized \
     "$@"' > /usr/bin/chrome-wrapper && \
     chmod +x /usr/bin/chrome-wrapper
 
@@ -131,6 +116,9 @@ RUN chmod -R 755 /opt/novnc && \
     echo "📄 File size:" && \
     wc -c /opt/novnc/auto_connect.html
 
+COPY captcha_watcher/websockify-wrapper.sh /app/websockify-wrapper.sh
+RUN chmod +x /app/websockify-wrapper.sh
+    
 # 14) Открытые порты
 EXPOSE 5900 6080
 

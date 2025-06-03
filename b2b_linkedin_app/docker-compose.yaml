@@ -46,6 +46,8 @@ services:
     environment:
       - DISPLAY=:0
       - PYTHONPATH=/app
+      - DEBIAN_FRONTEND=noninteractive
+      - LOG_LEVEL=DEBUG
     env_file:
       - .env
     dns:

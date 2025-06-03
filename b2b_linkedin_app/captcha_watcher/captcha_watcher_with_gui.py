@@ -106,6 +106,7 @@ def resolve_with_gui(email):
         # Create visible browser (works with VNC) - ENHANCED OPTIONS
         os.environ['DISPLAY'] = ':0'
         options = Options()
+        os.environ['XAUTHORITY'] = '/tmp/.Xauthority'
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-blink-features=AutomationControlled')
