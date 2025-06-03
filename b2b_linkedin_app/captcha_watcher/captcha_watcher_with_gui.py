@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import json
+import socket
 
 # Fix the import path for Docker
 sys.path.append('/app')
@@ -20,35 +21,37 @@ import undetected_chromedriver as uc
 WATCH_FILE = "./shared_volume/captcha_queue.txt"
 PROCESSED_FILE = "./shared_volume/captcha_resolved.txt"
 
+def ensure_vnc_ready(timeout=30):
+    print("\n⏳ Waiting for noVNC to become available on port 6080...")
+    for i in range(timeout):
+        try:
+            with socket.create_connection(("localhost", 6080), timeout=1):
+                print("\u2705 noVNC is accessible on port 6080")
+                return True
+        except:
+            time.sleep(1)
+    print("\u274c Timeout waiting for noVNC on port 6080")
+    return False
+
 def find_credentials_for_email(target_email):
-    """Find specific credentials for the given email in the JSON file"""
     try:
-        # Try to read credentials directly from JSON file
         json_path = 'credentials.json'
         if os.path.exists(json_path):
             with open(json_path, 'r', encoding='utf-8') as file:
                 all_creds = json.load(file)
-                
-            # Find the specific email
             for cred in all_creds:
                 if cred.get('email') == target_email:
                     print(f"✅ Found specific credentials for: {target_email}")
                     return cred
-            
-            print(f"⚠️  Specific email {target_email} not found in credentials")
-        
-        # Fallback: use any valid credential
+            print(f"⚠️ Specific email {target_email} not found in credentials")
         credential = Credential()
         creds = credential.get_credentials()
         if creds:
             print(f"🔄 Using fallback credentials: {creds.get('email', 'unknown')}")
             return creds
-        
         return None
-        
     except Exception as e:
         print(f"❌ Error finding credentials: {e}")
-        # Last resort - try the Credential class
         try:
             credential = Credential()
             return credential.get_credentials()
@@ -86,7 +89,7 @@ def resolve_with_gui(email):
     print(f"{'='*70}")
     
     try:
-        # Create visible browser (works with VNC)
+        # Create visible browser (works with VNC) - ENHANCED OPTIONS
         options = Options()
         options.add_argument('--no-sandbox')
         options.add_argument('--disable-dev-shm-usage')
@@ -97,10 +100,24 @@ def resolve_with_gui(email):
         options.add_argument('--disable-web-security')
         options.add_argument('--allow-running-insecure-content')
         options.add_argument('--start-maximized')
+        options.add_argument('--disable-backgrounding-occluded-windows')
+        options.add_argument('--disable-renderer-backgrounding')
+        options.add_argument('--disable-background-timer-throttling')
+        options.add_argument('--disable-features=TranslateUI')
+        options.add_argument('--remote-debugging-port=9223')  # Different port from headless chrome
+        
+        # Use unique user data directory
+        user_data_dir = f"/tmp/chrome-vnc-{int(time.time())}"
+        os.makedirs(user_data_dir, exist_ok=True)
+        options.add_argument(f'--user-data-dir={user_data_dir}')
+        
         # NO headless - this creates visible window in VNC
         
-        print(f"🚀 Starting Chrome browser...")
-        driver = uc.Chrome(options=options, version_main=136)
+        print(f"🚀 Starting Chrome browser for VNC...")
+        driver = uc.Chrome(
+            options=options,
+            version_main=136
+        )
         
         # Navigate to LinkedIn login
         print(f"🌐 Navigating to LinkedIn login...")
@@ -209,6 +226,13 @@ def resolve_with_gui(email):
         
         driver.quit()
         
+        # Cleanup user data directory
+        try:
+            import shutil
+            shutil.rmtree(user_data_dir, ignore_errors=True)
+        except:
+            pass
+        
         # Mark as resolved
         with open(PROCESSED_FILE, "a") as f:
             f.write(f"{email}\n")
@@ -225,73 +249,42 @@ def resolve_with_gui(email):
             f.write(f"{email}\n")
 
 def watch_loop():
-    """Enhanced watch loop with GUI support"""
+    time.sleep(8)
     print(f"\n{'='*70}")
     print(f"🔍 GUI CAPTCHA WATCHER STARTED")
     print(f"{'='*70}")
-    print(f"📺 VNC Server running on port 5900")
+    print(f"💽 VNC Server running on port 5900")
     print(f"🌐 noVNC Web Interface on port 6080")
-    print(f"🔓 No password required (auto-connect enabled)")
-    print(f"")
-    print(f"🖥️  Access URLs:")
-    print(f"   📺 Auto-Connect: http://localhost:6080/auto_connect.html")
+    print(f"🔓 No password required (auto-connect enabled)\n")
+    print(f"🗂️ Access URLs:")
+    print(f"   📍 Auto-Connect: http://localhost:6080/auto_connect.html")
     print(f"   🔧 Manual: http://localhost:6080/vnc.html")
     print(f"   📁 Directory: http://localhost:6080/")
     print(f"{'='*70}")
-    
-    # Show credential info on startup
-    try:
-        if os.path.exists('credentials.json'):
-            with open('credentials.json', 'r') as f:
-                all_creds = json.load(f)
-                valid_count = sum(1 for c in all_creds if c.get('status', 'valid') == 'valid')
-                total_count = len(all_creds)
-                print(f"📈 Available credentials: {valid_count}/{total_count} valid")
-                
-                # Show some valid emails (partially masked)
-                valid_emails = [c.get('email', '') for c in all_creds if c.get('status', 'valid') == 'valid'][:5]
-                if valid_emails:
-                    print(f"📧 Valid emails sample:")
-                    for email in valid_emails:
-                        masked = f"{email[:3]}***@{email.split('@')[1] if '@' in email else 'domain'}"
-                        print(f"   - {masked}")
-                    if len(valid_emails) == 5 and valid_count > 5:
-                        print(f"   ... and {valid_count - 5} more")
-                print(f"")
-    except Exception as debug_error:
-        print(f"⚠️  Could not check credentials: {debug_error}")
-    
-    print("👀 Watching for captcha resolution requests...")
-    print("💤 Waiting for login attempts that trigger captcha...")
-    print("")
-    
-    processed = set()
 
+    ensure_vnc_ready()
+
+    processed = set()
     while True:
         try:
             if os.path.exists(WATCH_FILE):
                 with open(WATCH_FILE, "r") as f:
                     lines = [line.strip() for line in f.readlines()]
-                    
                 for email in lines:
                     if email and email not in processed:
-                        print(f"\n{'🎯' * 20}")
+                        print("\n" + "🎯" * 20) 
                         print(f"🚨 NEW CAPTCHA REQUEST: {email}")
-                        print(f"{'🎯' * 20}")
-                        resolve_with_gui(email)
-                        processed.add(email)
-                        print(f"{'✅' * 20}")
-                        print(f"")
-                        
-                # Clean up processed entries
-                if lines:
-                    remaining = [e for e in lines if e not in processed]
-                    with open(WATCH_FILE, "w") as f:
-                        for email in remaining:
-                            f.write(f"{email}\n")
-            
+                        print("\n" + "🎯" * 20) 
+                        try:
+                            resolve_with_gui(email)
+                        finally:
+                            processed.add(email)
+                        print("✅" * 20 + "\n")
+                remaining = [e for e in lines if e not in processed]
+                with open(WATCH_FILE, "w") as f:
+                    for email in remaining:
+                        f.write(f"{email}\n")
             time.sleep(10)
-            
         except KeyboardInterrupt:
             print(f"\n{'='*70}")
             print(f"👋 GUI Captcha watcher stopped by user")

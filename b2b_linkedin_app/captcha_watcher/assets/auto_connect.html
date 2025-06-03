@@ -1,279 +1,327 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>LinkedIn Captcha VNC - Auto Connect</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    
-    <!-- Include noVNC CSS and JS -->
-    <link rel="stylesheet" type="text/css" href="app/styles/base.css" />
-    <link rel="stylesheet" type="text/css" href="app/styles/ui.css" />
-    
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        
-        .header {
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px;
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        
-        .header h2 {
-            margin: 0;
-            font-size: 20px;
-        }
-        
-        .header p {
-            margin: 5px 0 0 0;
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        
-        #screen {
-            width: 100%;
-            height: calc(100vh - 140px);
-            background: #000;
-            border: 2px solid #333;
-            border-radius: 8px;
-            margin: 10px;
-        }
-        
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            transition: opacity 0.5s ease;
-        }
-        
-        .loading-content {
-            text-align: center;
-            color: white;
-        }
-        
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #333;
-            border-top: 5px solid #0066cc;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .instructions {
-            background: rgba(255, 243, 205, 0.95);
-            border: 1px solid #ffeaa7;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px;
-            color: #856404;
-        }
-        
-        .instructions h3 {
-            margin-top: 0;
-            font-size: 16px;
-        }
-        
-        .instructions ol {
-            margin: 10px 0;
-            padding-left: 20px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        
-        .status {
-            text-align: center;
-            padding: 10px;
-            margin: 10px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        
-        .status.connecting {
-            background: #cce5ff;
-            color: #0066cc;
-        }
-        
-        .status.connected {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h2>🔐 LinkedIn Captcha Resolution</h2>
-        <p>VNC Remote Desktop - Auto-connecting...</p>
-    </div>
-    
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <h3>Connecting to VNC Server</h3>
-            <p>Setting up remote desktop for captcha resolution...</p>
-            <p><small>This may take 10-15 seconds</small></p>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>LinkedIn Captcha VNC – Auto Connect</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- Стили самого noVNC (обычно в /opt/novnc/app/styles/) -->
+        <link rel="stylesheet" href="styles/base.css" />
+        <link rel="stylesheet" href="styles/ui.css" />
+
+        <style>
+            /* Немного «гламура» для заставки */
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                color: #fff;
+            }
+            .header {
+                background: rgba(0, 0, 0, 0.85);
+                padding: 12px 20px;
+                text-align: center;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+            .header h2 {
+                margin: 0;
+                font-size: 1.25rem;
+            }
+            .header p {
+                margin: 4px 0 0;
+                font-size: 0.9rem;
+                opacity: 0.85;
+            }
+            #screen {
+                width: 100%;
+                height: calc(100vh - 200px);
+                background: #000;
+                border: 2px solid #333;
+                border-radius: 8px;
+                margin: 10px auto;
+                box-sizing: border-box;
+            }
+            .loading-overlay {
+                position: fixed;
+                top: 0; left: 0;
+                width: 100%; height: 100%;
+                background: rgba(0,0,0,0.9);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                transition: opacity 0.5s ease;
+            }
+            .loading-content {
+                text-align: center;
+            }
+            .spinner {
+                width: 50px;
+                height: 50px;
+                border: 5px solid #444;
+                border-top: 5px solid #00aced;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 16px;
+            }
+            @keyframes spin {
+                0%   { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .hidden {
+                opacity: 0;
+                pointer-events: none;
+            }
+            .status {
+                text-align: center;
+                margin: 10px 0;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-weight: bold;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .status.connecting { background: #cce5ff; color: #004085; }
+            .status.connected  { background: #d4edda; color: #155724; }
+            .status.error      { background: #f8d7da; color: #721c24; }
+            .instructions {
+                background: rgba(255, 243, 205, 0.95);
+                border: 1px solid #ffeeba;
+                border-radius: 8px;
+                color: #856404;
+                max-width: 600px;
+                margin: 8px auto;
+                padding: 12px 16px;
+            }
+            .instructions h3 {
+                margin-top: 0;
+                font-size: 1rem;
+            }
+            .instructions ol {
+                margin: 0 0 0 16px;
+                padding: 0;
+                font-size: 0.9rem;
+                line-height: 1.4;
+            }
+            .retry-button {
+                display: inline-block;
+                background: #007bff;
+                color: #fff;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 0.9rem;
+                margin: 12px 4px;
+            }
+            .retry-button:hover {
+                background: #0056b3;
+            }
+            .retry-button:disabled {
+                background: #6c757d;
+                cursor: not-allowed;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h2>🔐 LinkedIn Captcha Resolution</h2>
+            <p>VNC Remote Desktop – Auto-connecting…</p>
         </div>
-    </div>
-    
-    <div class="status connecting" id="status">
-        🔄 Initializing VNC connection...
-    </div>
-    
-    <div class="instructions">
-        <h3>📋 How to solve the captcha:</h3>
-        <ol>
-            <li>Wait for the desktop to load completely</li>
-            <li>You'll see Chrome browser with LinkedIn login page</li>
-            <li>Complete any captcha or security challenge</li>
-            <li>Login with the pre-filled credentials</li>
-            <li>Wait until you reach LinkedIn feed/profile</li>
-            <li>The system will automatically detect success</li>
-        </ol>
-    </div>
-    
-    <!-- noVNC container -->
-    <div id="screen"></div>
 
-    <!-- Include noVNC JavaScript -->
-    <script type="module" crossorigin="anonymous">
-        import RFB from './core/rfb.js';
+        <!-- Оверлей-заставка во время установки соединения -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <h3>Connecting to VNC Server</h3>
+                <p>Setting up remote desktop for captcha resolution…</p>
+                <p><small>This may take 10–15 seconds</small></p>
+            </div>
+        </div>
 
-        let rfb;
-        let desktopName;
+        <!-- Строка статуса прямо под шапкой -->
+        <div class="status connecting" id="status">
+            🔄 Initializing VNC connection...
+        </div>
 
-        function updateStatus(text, className = 'connecting') {
-            const status = document.getElementById('status');
-            status.textContent = text;
-            status.className = `status ${className}`;
-        }
+        <!-- Инструкция для пользователя, как решить капчу вручную -->
+        <div class="instructions">
+            <h3>📋 How to solve the captcha:</h3>
+            <ol>
+                <li>Wait until the virtual desktop полностью загрузится.</li>
+                <li>Вы увидите Chrome с формой входа LinkedIn.</li>
+                <li>Пройдите любую captcha или security challenge.</li>
+                <li>Авторизуйтесь, нажав «Sign in» (логин/пароль уже вписаны).</li>
+                <li>Дождитесь, пока загрузится ваша лента/профиль LinkedIn.</li>
+                <li>Система автоматически зафиксирует успешный вход.</li>
+            </ol>
+        </div>
 
-        function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-            }, 2000);
-        }
+        <!-- Кнопки «Переподключиться» и «Обновить страницу» -->
+        <div style="text-align: center;">
+            <button id="retryButton" class="retry-button" onclick="retryConnection()" style="display: none;">
+                🔄 Retry Connection
+            </button>
+            <button class="retry-button" onclick="window.location.reload()">
+                🔃 Refresh Page
+            </button>
+        </div>
 
-        function connectedToServer(e) {
-            updateStatus('✅ Connected to VNC server', 'connected');
-            hideLoading();
-        }
+        <!-- Контейнер, в котором рисуется VNC-полотно -->
+        <div id="screen"></div>
 
-        function disconnectedFromServer(e) {
-            if (e.detail.clean) {
-                updateStatus('🔌 Disconnected from VNC server', 'error');
-            } else {
-                updateStatus('❌ Something went wrong, connection is closed', 'error');
+        <!-- Подключаем core/rfb.js из папки noVNC -->
+        <script type="module" crossorigin="anonymous">
+            import RFB from './core/rfb.js';
+
+            let rfb = null;
+            let connectionAttempts = 0;
+            const maxRetries = 5;
+            let isConnecting = false;
+            let hasConnectedOnce = false;
+
+            function updateStatus(text, className = 'connecting') {
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = text;
+                statusEl.className = `status ${className}`;
             }
-        }
 
-        function credentialsRequired(e) {
-            // This shouldn't happen with -nopw but just in case
-            const password = prompt("Password Required:");
-            rfb.sendCredentials({ password: password });
-        }
+            function hideLoading() {
+                const overlay = document.getElementById('loadingOverlay');
+                setTimeout(() => overlay.classList.add('hidden'), 1000);
+            }
 
-        function connect() {
-            updateStatus('🔄 Connecting to VNC server...', 'connecting');
-            
-            const host = window.location.hostname;
-            const port = '6080';
-            const path = 'websockify';
-            
-            const url = `ws://${host}:${port}/${path}`;
-            
-            try {
-                rfb = new RFB(document.getElementById('screen'), url, {
-                    credentials: { password: '' }
-                });
-                
-                rfb.addEventListener("connect", connectedToServer);
-                rfb.addEventListener("disconnect", disconnectedFromServer);
-                rfb.addEventListener("credentialsrequired", credentialsRequired);
-                
-                // Set scaling and quality
-                rfb.scaleViewport = true;
-                rfb.resizeSession = true;
-                rfb.qualityLevel = 6;
-                rfb.compressionLevel = 2;
-                
-            } catch (exc) {
-                updateStatus(`❌ Connection failed: ${exc}`, 'error');
-                console.error('Connection error:', exc);
-                
-                // Retry after 5 seconds
+            function showRetryButton() {
+                const btn = document.getElementById('retryButton');
+                btn.style.display = 'inline-block';
+                btn.disabled = false;
+            }
+
+            function hideRetryButton() {
+                document.getElementById('retryButton').style.display = 'none';
+            }
+
+            function connectedToServer(e) {
+                updateStatus('✅ Connected to VNC server', 'connected');
+                hideLoading();
+                hideRetryButton();
+                hasConnectedOnce = true;
+                isConnecting = false;
+                console.log('✅ VNC connection established successfully');
+            }
+
+            function disconnectedFromServer(e) {
+                isConnecting = false;
+                if (hasConnectedOnce) {
+                    // Если хотя бы раз коннектились, просто показываем сообщение об отключении
+                    updateStatus('🔌 Disconnected from VNC server', 'error');
+                } else {
+                    // Если ещё ни разу не подключились, пробуем ретраять до maxRetries
+                    updateStatus('❌ Connection failed — retrying…', 'error');
+                    if (connectionAttempts < maxRetries) {
+                        setTimeout(connect, 2000);
+                    } else {
+                        showRetryButton();
+                    }
+                }
+            }
+
+            function credentialsRequired(e) {
+                // В нашем случае мы стартуем x11vnc с -nopw, но на всякий случай:
+                updateStatus('🔑 No password required', 'connecting');
+                rfb.sendCredentials({ password: '' });
+            }
+
+            function connect() {
+                if (isConnecting) return;
+                connectionAttempts++;
+                isConnecting = true;
+
+                updateStatus(`🔄 Connecting to VNC server (attempt ${connectionAttempts}/${maxRetries})`, 'connecting');
+                hideRetryButton();
+
+                const host = window.location.hostname || 'localhost';
+                const port = '6080';
+                const protocol = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
+
+                // **Важный момент**: мы используем WebSocket на “корне” (/), 
+                // потому что websockify в нашем supervisord.conf запускается как:
+                //    websockify.py --web /opt/novnc --heartbeat=30 0.0.0.0:6080 127.0.0.1:5900
+                // и, по умолчанию, слушает WS-запросы на “/websockify” или просто “/”,
+                // в зависимости от версии. На современных сборках noVNC достаточно слать запросы на “/”.
+                // Поэтому в URL мы не указываем “/websockify”, а просто:
+                const url = `${protocol}//${host}:${port}/`;
+
+                console.log(`Attempting VNC connection to: ${url}`);
+
+                try {
+                    if (rfb) {
+                        try { rfb.disconnect(); }
+                        catch(e) { console.warn('Error while disconnecting previous RFB:', e); }
+                    }
+
+                    rfb = new RFB(document.getElementById('screen'), url, {
+                        credentials: { password: '' }
+                    });
+                    rfb.addEventListener('connect', connectedToServer);
+                    rfb.addEventListener('disconnect', disconnectedFromServer);
+                    rfb.addEventListener('credentialsrequired', credentialsRequired);
+
+                    // Параметры качества/масштабирования
+                    rfb.scaleViewport   = true;
+                    rfb.resizeSession   = true;
+                    rfb.qualityLevel    = 6;
+                    rfb.compressionLevel= 2;
+                } catch (exc) {
+                    isConnecting = false;
+                    updateStatus(`❌ Connection error: ${exc}`, 'error');
+                    console.error('Connection exception:', exc);
+                    if (connectionAttempts < maxRetries) {
+                        setTimeout(connect, 3000);
+                    } else {
+                        updateStatus(`❌ Max retries reached. Please refresh.`, 'error');
+                        showRetryButton();
+                    }
+                }
+            }
+
+            function retryConnection() {
+                if (connectionAttempts >= maxRetries) connectionAttempts = 0;
+                console.log(`Manual retry requested (${connectionAttempts + 1}/${maxRetries})`);
+                const btn = document.getElementById('retryButton');
+                btn.disabled = true;
+                btn.textContent = '⏳ Retrying…';
                 setTimeout(() => {
                     connect();
-                }, 5000);
+                    btn.textContent = '🔄 Retry Connection';
+                }, 1000);
             }
-        }
 
-        // Auto-connect when page loads
-        window.addEventListener('load', function() {
-            console.log('Starting auto-connect to VNC...');
-            updateStatus('🚀 Starting VNC connection...', 'connecting');
-            
-            // Small delay to ensure VNC server is ready
-            setTimeout(() => {
-                connect();
-            }, 2000);
-        });
+            // Автоподключение при загрузке страницы
+            window.addEventListener('load', () => {
+                updateStatus('🚀 Starting VNC connection…', 'connecting');
+                // небольшая задержка, чтобы DOM успел нарисоваться
+                setTimeout(connect, 500);
+            });
 
-        // Retry connection if it fails
-        let retryCount = 0;
-        const maxRetries = 10;
-        
-        function retryConnection() {
-            if (retryCount < maxRetries) {
-                retryCount++;
-                updateStatus(`🔄 Retry attempt ${retryCount}/${maxRetries}...`, 'connecting');
-                setTimeout(() => {
-                    connect();
-                }, 3000);
-            } else {
-                updateStatus('❌ Max retries reached. Please refresh the page.', 'error');
-            }
-        }
+            // Глобальный перехват ошибок WebSocket, чтобы триггерить ретраев
+            window.addEventListener('error', (e) => {
+                console.error('Global error:', e.error);
+                if (e.error && e.error.message && e.error.message.includes('WebSocket') && !hasConnectedOnce) {
+                    isConnecting = false;
+                    if (connectionAttempts < maxRetries) {
+                        setTimeout(connect, 2000);
+                    }
+                }
+            });
 
-        // Global error handler
-        window.addEventListener('error', function(e) {
-            console.error('Global error:', e.error);
-            if (e.error && e.error.message && e.error.message.includes('WebSocket')) {
-                retryConnection();
-            }
-        });
-    </script>
-</body>
-</html>
+            // Делаем функцию retryConnection() доступной глобально
+            window.retryConnection = retryConnection;
+        </script>
+    </body>
+    </html>

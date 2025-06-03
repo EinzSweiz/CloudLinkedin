@@ -1,147 +1,320 @@
-<script>
-    (function autoOpenVNC() {
-        console.log('Starting auto VNC window opener...');
-        
-        // Function to open VNC window with auto-connect
-        function openVNCWindow() {
-            try {
-                // Primary: Try auto-connect version
-                let vncWindow = window.open("http://localhost:6080/auto_connect.html", "vnc_captcha", 
-                    "width=1280,height=900,scrollbars=yes,resizable=yes,toolbar=no,location=no,status=no");
-                
-                // Fallback: Regular noVNC with auto-connect parameters
-                if (!vncWindow || vncWindow.closed) {
-                    console.log('Trying fallback VNC URL...');
-                    vncWindow = window.open("http://localhost:6080/vnc.html?autoconnect=true&resize=scale&quality=6", 
-                        "vnc_captcha", "width=1280,height=900,scrollbars=yes,resizable=yes");
-                }
-                
-                // Focus the window
-                if (vncWindow && !vncWindow.closed) {
-                    setTimeout(() => {
-                        try {
-                            vncWindow.focus();
-                            console.log('VNC window opened and focused');
-                        } catch (e) {
-                            console.log("Could not focus VNC window:", e);
-                        }
-                    }, 1000);
-                    
-                    return vncWindow;
-                } else {
-                    console.log('Failed to open VNC window (popup blocked?)');
-                    return null;
-                }
-                
-            } catch (error) {
-                console.log("Error opening VNC window:", error);
-                return null;
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>VNC Captcha Monitor</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                margin: 20px;
+                background: #f8f9fa;
             }
-        }
-        
-        // Open immediately
-        let vncWindow = openVNCWindow();
-        
-        // Keep checking and reopening if closed
-        setInterval(() => {
-            if (!vncWindow || vncWindow.closed) {
-                console.log('VNC window closed, reopening...');
-                vncWindow = openVNCWindow();
-            }
-        }, 15000); // Check every 15 seconds
-        
-    })();
-</script>
-
-<!-- Enhanced inline VNC option if popup is blocked -->
-<div style="margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 1px solid #dee2e6; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h4 style="margin-top: 0; color: #495057; display: flex; align-items: center;">
-        🔐 <span style="margin-left: 8px;">VNC Captcha Resolution Center</span>
-    </h4>
-    
-    <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 12px; margin-bottom: 15px; color: #155724;">
-        <strong>✅ Auto-Connect Enabled:</strong> VNC will connect automatically without requiring a password!
-    </div>
-    
-    <p style="margin-bottom: 15px; color: #6c757d;">
-        <strong>Access VNC Remote Desktop:</strong>
-    </p>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-bottom: 20px;">
-        <a href="http://localhost:6080/auto_connect.html" 
-           target="_blank" 
-           onclick="console.log('Auto-connect clicked')"
-           style="background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 12px 16px; text-decoration: none; border-radius: 8px; font-size: 14px; text-align: center; transition: transform 0.2s; display: flex; align-items: center; justify-content: center;">
-            🖥️ <span style="margin-left: 8px;">Auto-Connect VNC</span>
-        </a>
-        
-        <a href="http://localhost:6080/vnc.html?autoconnect=true&resize=scale&quality=6" 
-           target="_blank" 
-           style="background: linear-gradient(135deg, #28a745, #1e7e34); color: white; padding: 12px 16px; text-decoration: none; border-radius: 8px; font-size: 14px; text-align: center; transition: transform 0.2s; display: flex; align-items: center; justify-content: center;">
-            🔧 <span style="margin-left: 8px;">Manual Connect</span>
-        </a>
-        
-        <a href="http://localhost:6080" 
-           target="_blank" 
-           style="background: linear-gradient(135deg, #6c757d, #495057); color: white; padding: 12px 16px; text-decoration: none; border-radius: 8px; font-size: 14px; text-align: center; transition: transform 0.2s; display: flex; align-items: center; justify-content: center;">
-           📁 <span style="margin-left: 8px;">VNC Directory</span>
-        </a>
-    </div>
-    
-    <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 12px; margin-bottom: 15px; color: #856404;">
-        <strong>💡 Instructions:</strong>
-        <ol style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li>Click "Auto-Connect VNC" above</li>
-            <li>Wait for the desktop to load (10-15 seconds)</li>
-            <li>You'll see Chrome with LinkedIn login page</li>
-            <li>Solve captcha and complete login</li>
-            <li>System automatically detects success</li>
-        </ol>
-    </div>
-    
-    <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 12px; color: #721c24;">
-        <strong>🚨 Troubleshooting:</strong>
-        <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-            <li><strong>Can't see desktop:</strong> Wait 15-30 seconds for VNC server to start</li>
-            <li><strong>Popup blocked:</strong> Allow popups for this site or use manual links above</li>
-            <li><strong>Connection failed:</strong> Try refreshing and click "Manual Connect"</li>
-            <li><strong>Still issues:</strong> Check Docker logs: <code>docker-compose logs captcha_watcher</code></li>
-        </ul>
-    </div>
-    
-    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
-        <button onclick="window.open('http://localhost:6080/auto_connect.html', 'vnc_test', 'width=1280,height=900')" 
-                style="background: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
-            🔄 Force Open VNC
-        </button>
-        
-        <button onclick="fetch('http://localhost:6080/').then(r => alert('VNC Status: ' + (r.ok ? 'Running ✅' : 'Down ❌'))).catch(e => alert('VNC Status: Down ❌'))" 
-                style="background: #ffc107; color: #212529; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">
-            🩺 Test VNC Server
-        </button>
-        
-        <a href="http://localhost:6080" target="_blank" 
-           style="background: #6f42c1; color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 13px;">
-            📋 VNC Server Info
-        </a>
-    </div>
-    
-    <details style="margin-top: 15px;">
-        <summary style="cursor: pointer; font-weight: bold; color: #495057;">🔧 Advanced Options</summary>
-        <div style="margin-top: 10px; padding: 10px; background: #f1f3f4; border-radius: 6px; font-size: 13px;">
-            <p><strong>Direct VNC Client:</strong></p>
-            <ul>
-                <li>Host: <code>localhost</code></li>
-                <li>Port: <code>5900</code></li>
-                <li>Password: <em>None (disabled)</em></li>
-            </ul>
             
-            <p><strong>noVNC URLs:</strong></p>
-            <ul>
-                <li>Auto-connect: <code>http://localhost:6080/auto_connect.html</code></li>
-                <li>Standard: <code>http://localhost:6080/vnc.html</code></li>
-                <li>With params: <code>http://localhost:6080/vnc.html?autoconnect=true&resize=scale</code></li>
-            </ul>
+            .container {
+                background: white;
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 900px;
+                margin: 0 auto;
+            }
+            
+            .header {
+                text-align: center;
+                margin-bottom: 20px;
+                color: #495057;
+            }
+            
+            .status {
+                padding: 15px;
+                border-radius: 8px;
+                margin: 15px 0;
+                text-align: center;
+                font-weight: 600;
+            }
+            
+            .status.success {
+                background: #d4edda;
+                border: 1px solid #c3e6cb;
+                color: #155724;
+            }
+            
+            .status.warning {
+                background: #fff3cd;
+                border: 1px solid #ffeaa7;
+                color: #856404;
+            }
+            
+            .status.error {
+                background: #f8d7da;
+                border: 1px solid #f5c6cb;
+                color: #721c24;
+            }
+            
+            .vnc-links {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 15px;
+                margin: 20px 0;
+            }
+            
+            .vnc-link {
+                background: linear-gradient(135deg, #007bff, #0056b3);
+                color: white;
+                padding: 20px;
+                text-decoration: none;
+                border-radius: 8px;
+                text-align: center;
+                transition: transform 0.2s;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                min-height: 100px;
+            }
+            
+            .vnc-link:hover {
+                transform: translateY(-2px);
+                text-decoration: none;
+                color: white;
+            }
+            
+            .vnc-link.success {
+                background: linear-gradient(135deg, #28a745, #1e7e34);
+            }
+            
+            .vnc-link.secondary {
+                background: linear-gradient(135deg, #6c757d, #495057);
+            }
+            
+            .vnc-link .icon {
+                font-size: 24px;
+            }
+            
+            .vnc-link .title {
+                font-size: 16px;
+                font-weight: bold;
+            }
+            
+            .vnc-link .desc {
+                font-size: 12px;
+                opacity: 0.9;
+            }
+            
+            .instructions {
+                background: #fff3cd;
+                border: 1px solid #ffeaa7;
+                border-radius: 8px;
+                padding: 15px;
+                margin: 20px 0;
+                color: #856404;
+            }
+            
+            .instructions ol {
+                margin: 10px 0 0 0;
+                padding-left: 20px;
+            }
+            
+            .debug-info {
+                background: #e9ecef;
+                border-radius: 8px;
+                padding: 15px;
+                margin: 20px 0;
+                font-family: monospace;
+                font-size: 14px;
+            }
+            
+            .control-buttons {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin: 20px 0;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background-color 0.2s;
+            }
+            
+            .btn-primary { background: #007bff; color: white; }
+            .btn-warning { background: #ffc107; color: #212529; }
+            .btn-info { background: #17a2b8; color: white; }
+            
+            .btn:hover { opacity: 0.9; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>🔐 VNC Captcha Resolution Center</h2>
+                <p>Solve LinkedIn captchas using remote desktop access</p>
+            </div>
+            
+            <div id="connectionStatus" class="status success">
+                ✅ VNC Server Active - Ready to connect
+            </div>
+            
+            <div class="instructions">
+                <strong>📋 Quick Start:</strong>
+                <ol>
+                    <li>Click "Auto-Connect VNC" below for the easiest access</li>
+                    <li>Wait for the desktop to load (10-15 seconds)</li>
+                    <li>You'll see Chrome browser with LinkedIn login</li>
+                    <li>Solve any captcha or security challenge</li>
+                    <li>Complete login until you reach LinkedIn feed</li>
+                    <li>System will automatically detect success</li>
+                </ol>
+            </div>
+            
+            <div class="vnc-links">
+                <a href="http://localhost:6080/auto_connect.html" 
+                target="_blank" 
+                class="vnc-link success">
+                    <div class="icon">🚀</div>
+                    <div class="title">Auto-Connect VNC</div>
+                    <div class="desc">Recommended - Auto-connects to desktop</div>
+                </a>
+                
+                <a href="http://localhost:6080/vnc.html" 
+                target="_blank" 
+                class="vnc-link">
+                    <div class="icon">🔧</div>
+                    <div class="title">Manual VNC</div>
+                    <div class="desc">Manual connection with controls</div>
+                </a>
+                
+                <a href="http://localhost:6080" 
+                target="_blank" 
+                class="vnc-link secondary">
+                    <div class="icon">📁</div>
+                    <div class="title">VNC Directory</div>
+                    <div class="desc">All available VNC options</div>
+                </a>
+            </div>
+            
+            <div class="control-buttons">
+                <button onclick="testVNCServer()" class="btn btn-warning">
+                    🩺 Test VNC Server
+                </button>
+                
+                <button onclick="checkStatus()" class="btn btn-info">
+                    📊 Check Status
+                </button>
+                
+                <button onclick="refreshPage()" class="btn btn-primary">
+                    🔄 Refresh
+                </button>
+            </div>
+            
+            <div class="debug-info" id="debugInfo">
+                <strong>🔍 Connection Info:</strong><br>
+                VNC Server: localhost:5900<br>
+                Web Interface: localhost:6080<br>
+                Status: Checking...
+            </div>
+            
+            <details style="margin-top: 20px;">
+                <summary style="cursor: pointer; font-weight: bold;">🔧 Advanced Options</summary>
+                <div style="margin-top: 10px; padding: 15px; background: #f1f3f4; border-radius: 6px;">
+                    <p><strong>Direct VNC Access:</strong></p>
+                    <ul>
+                        <li>Host: localhost</li>
+                        <li>Port: 5900</li>
+                        <li>Password: None (disabled)</li>
+                    </ul>
+                    
+                    <p><strong>Alternative URLs:</strong></p>
+                    <ul>
+                        <li><a href="http://localhost:6080/vnc.html?autoconnect=true&resize=scale" target="_blank">VNC with auto-resize</a></li>
+                        <li><a href="http://localhost:6080/vnc.html?autoconnect=true" target="_blank">VNC with auto-connect</a></li>
+                    </ul>
+                </div>
+            </details>
         </div>
-    </details>
-</div>
+
+        <script>
+            function updateStatus(message, type = 'success') {
+                const statusDiv = document.getElementById('connectionStatus');
+                statusDiv.textContent = message;
+                statusDiv.className = `status ${type}`;
+            }
+
+            function updateDebugInfo(info) {
+                const debugDiv = document.getElementById('debugInfo');
+                debugDiv.innerHTML = `
+                    <strong>🔍 Connection Info:</strong><br>
+                    VNC Server: localhost:5900<br>
+                    Web Interface: localhost:6080<br>
+                    Status: ${info}
+                `;
+            }
+
+            function testVNCServer() {
+                updateStatus('🔍 Testing VNC server...', 'warning');
+                updateDebugInfo('Testing connection...');
+                
+                // Test VNC web interface
+                fetch('http://localhost:6080/')
+                    .then(response => {
+                        if (response.ok) {
+                            updateStatus('✅ VNC server is running and accessible', 'success');
+                            updateDebugInfo('Connected - Server responding normally');
+                        } else {
+                            updateStatus('⚠️ VNC web interface responding with errors', 'warning');
+                            updateDebugInfo(`HTTP ${response.status} - ${response.statusText}`);
+                        }
+                    })
+                    .catch(error => {
+                        updateStatus('❌ VNC server not responding', 'error');
+                        updateDebugInfo(`Connection failed: ${error.message}`);
+                    });
+            }
+
+            function checkStatus() {
+                updateStatus('📊 Checking system status...', 'warning');
+                
+                // Check if VNC URLs are accessible
+                Promise.all([
+                    fetch('http://localhost:6080/').then(r => r.ok),
+                    fetch('http://localhost:6080/auto_connect.html').then(r => r.ok),
+                    fetch('http://localhost:6080/vnc.html').then(r => r.ok)
+                ]).then(results => {
+                    const [webInterface, autoConnect, manualVnc] = results;
+                    
+                    if (webInterface && autoConnect && manualVnc) {
+                        updateStatus('✅ All VNC services operational', 'success');
+                        updateDebugInfo('All services running - Ready for captcha resolution');
+                    } else {
+                        updateStatus('⚠️ Some VNC services may have issues', 'warning');
+                        updateDebugInfo(`Services: Web(${webInterface ? 'OK' : 'FAIL'}) Auto(${autoConnect ? 'OK' : 'FAIL'}) Manual(${manualVnc ? 'OK' : 'FAIL'})`);
+                    }
+                }).catch(error => {
+                    updateStatus('❌ Cannot reach VNC services', 'error');
+                    updateDebugInfo(`Error: ${error.message}`);
+                });
+            }
+
+            function refreshPage() {
+                window.location.reload();
+            }
+
+            // Auto-check status on page load
+            window.addEventListener('load', function() {
+                setTimeout(testVNCServer, 1000);
+            });
+
+            // Periodic status check every 30 seconds
+            setInterval(function() {
+                if (document.visibilityState === 'visible') {
+                    checkStatus();
+                }
+            }, 30000);
+        </script>
+    </body>
+    </html>

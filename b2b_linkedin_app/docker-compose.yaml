@@ -48,7 +48,14 @@ services:
       - PYTHONPATH=/app
     env_file:
       - .env
+    dns:
+    - 8.8.8.8
+    - 1.1.1.1
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
 
   celery:
     build:
