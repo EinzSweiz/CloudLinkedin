@@ -1,186 +1,236 @@
-# Browser-Based Captcha Handler - Shows captcha in user's web browser
+# parser/engine/core/captcha_handler.py - Enhanced version with full automation
 import os
 import time
 import logging
-import json
-import uuid
-from typing import Optional
-from selenium.webdriver.remote.webdriver import WebDriver
-from django.urls import reverse
-from django.conf import settings
+import threading
+import webbrowser
+from typing import Dict, Optional
+from parser_controler.docker_manager import get_manager, AutomatedCaptchaHandler
 
 logger = logging.getLogger(__name__)
 
-class BrowserCaptchaHandler:
-    def __init__(self):
-        self.captcha_sessions = {}  # Store active captcha sessions
-        self.max_wait_time = 600  # 10 minutes
+class FullyAutomatedCaptchaHandler:
+    """
+    Fully automated CAPTCHA handler that requires ZERO manual intervention
+    except for solving the actual CAPTCHA in the browser
+    """
     
-    def request_manual_captcha_solve(self, email: str, driver: WebDriver) -> bool:
+    def __init__(self, auto_open_browser: bool = True, timeout: int = 900):
+        self.auto_open_browser = auto_open_browser
+        self.timeout = timeout  # 15 minutes default
+        self.automated_handler = AutomatedCaptchaHandler()
+        
+    def solve_captcha(self, email: str, cred_id: str = None) -> bool:
         """
-        Shows captcha in user's web browser through Django interface
+        Main CAPTCHA solving method - completely automated
+        
+        Args:
+            email: Email account that needs CAPTCHA solving
+            cred_id: Credential ID (optional, defaults to email)
+            
+        Returns:
+            bool: True if CAPTCHA was solved successfully
         """
+        if not cred_id:
+            cred_id = email
+            
         try:
-            logger.info(f"[CAPTCHA] 🔐 BROWSER CAPTCHA for: {email}")
+            logger.info(f"🤖 Starting fully automated CAPTCHA solving for: {email}")
             
-            # 1. Create unique captcha session
-            session_id = str(uuid.uuid4())
+            # Start automated container
+            result = self.automated_handler.solve_captcha_automated(
+                email=email,
+                cred_id=cred_id,
+                auto_open=self.auto_open_browser
+            )
             
-            # 2. Save session data
-            session_data = self._save_captcha_session(session_id, email, driver)
+            if result["status"] == "error":
+                logger.error(f"❌ Failed to start CAPTCHA solver: {result.get('error')}")
+                return False
             
-            # 3. Store in memory for web interface
-            self.captcha_sessions[session_id] = {
-                'email': email,
-                'status': 'pending',
-                'created_at': time.time(),
-                'current_url': driver.current_url,
-                'cookies': driver.get_cookies(),
-                'user_agent': driver.execute_script("return navigator.userAgent;")
-            }
+            if result["status"] == "queued":
+                logger.info(f"📋 CAPTCHA request queued: {result.get('job_id')}")
+                logger.info(f"""
+🕒 CAPTCHA REQUEST QUEUED
+========================
+Email: {email}
+Job ID: {result.get('job_id')}
+Queue Position: {result.get('queue_status', {}).get('queue_length', 'Unknown')}
+
+Your request has been queued and will be processed automatically
+when a container becomes available.
+""")
+                # Wait for queue processing (could implement WebSocket updates here)
+                return self._wait_for_queue_processing(result.get('job_id'))
             
-            # 4. Display instructions to user
-            self._show_browser_instructions(session_id, email)
+            container_id = result.get("container_id")
+            if not container_id:
+                logger.error("❌ No container ID returned")
+                return False
             
-            # 5. Wait for resolution via web interface
-            return self._wait_for_browser_resolution(session_id, email)
+            # Display user-friendly status
+            self._display_captcha_status(result)
+            
+            # Wait for completion with real-time updates
+            return self._wait_for_completion_with_updates(container_id, email)
             
         except Exception as e:
-            logger.error(f"[CAPTCHA] Error in browser captcha handler: {e}")
+            logger.error(f"❌ Automated CAPTCHA solving failed: {e}")
             return False
     
-    def _save_captcha_session(self, session_id: str, email: str, driver: WebDriver) -> dict:
-        """Save captcha session data for web interface"""
-        try:
-            session_data = {
-                'session_id': session_id,
-                'email': email,
-                'current_url': driver.current_url,
-                'cookies': driver.get_cookies(),
-                'user_agent': driver.execute_script("return navigator.userAgent;"),
-                'timestamp': int(time.time()),
-                'screenshot_path': f"/app/shared_volume/captcha_{session_id}.png"
-            }
-            
-            # Take screenshot
-            driver.save_screenshot(session_data['screenshot_path'])
-            
-            # Save to file for persistence
-            session_file = f"/app/shared_volume/captcha_session_{session_id}.json"
-            with open(session_file, 'w') as f:
-                json.dump(session_data, f, indent=2, default=str)
-            
-            return session_data
-            
-        except Exception as e:
-            logger.error(f"[CAPTCHA] Error saving session: {e}")
-            return {}
+    def _display_captcha_status(self, result: Dict):
+        """Display user-friendly status information"""
+        logger.info(f"""
+🚀 AUTOMATED CAPTCHA SOLVER ACTIVE
+===================================
+Email: {result['email']}
+Container: {result['container_id'][:12]}
+Status: {result['status'].upper()}
+
+🌐 VNC Interface: {result['auto_connect_url']}
+📺 Direct VNC: localhost:{result['vnc_port']}
+
+🤖 AUTOMATION STATUS:
+✅ Container started and initializing
+✅ VNC server starting up
+✅ Auto-connect interface preparing
+{'✅ Browser will auto-open in 5 seconds' if self.auto_open_browser else '🔗 Use the URL above to connect manually'}
+
+⏳ Estimated time: {result.get('estimated_time', '5-15 minutes')}
+🔄 Monitoring for completion automatically...
+
+INSTRUCTIONS:
+{chr(10).join(f'   {instruction}' for instruction in result.get('instructions', []))}
+===================================
+""")
     
-    def _show_browser_instructions(self, session_id: str, email: str):
-        """Show instructions for browser-based captcha resolution"""
+    def _wait_for_completion_with_updates(self, container_id: str, email: str) -> bool:
+        """Wait for CAPTCHA completion with real-time status updates"""
+        start_time = time.time()
+        last_status_time = 0
+        status_interval = 60  # Update every minute
         
-        # Get the captcha resolution URL
-        captcha_url = f"http://localhost:8001/admin/solve-captcha/?session={session_id}"
+        logger.info("🔄 Monitoring CAPTCHA solving progress...")
+        logger.info("   (Updates every minute, solving typically takes 2-10 minutes)")
         
-        instructions = f"""
-{'='*80}
-🔐 CAPTCHA RESOLUTION REQUIRED - WEB BROWSER
-{'='*80}
-
-Account: {email}
-Session ID: {session_id}
-
-🌐 OPEN IN YOUR BROWSER:
-   {captcha_url}
-
-📋 INSTRUCTIONS:
-   1. Open the URL above in your web browser
-   2. You'll see the LinkedIn captcha page
-   3. Solve the captcha/security challenge
-   4. Complete login until you reach LinkedIn feed
-   5. The system will automatically detect completion
-
-⏰ Timeout: {self.max_wait_time/60:.0f} minutes
-
-{'='*80}
-        """
+        while time.time() - start_time < self.timeout:
+            try:
+                # Get current status
+                status = self.automated_handler.get_status(container_id=container_id)
+                
+                if not status or status.get("error"):
+                    logger.warning(f"⚠️ Could not get container status: {status}")
+                    time.sleep(30)
+                    continue
+                
+                # Check if completed
+                container_status = status.get("status", "unknown")
+                
+                if container_status == "completed":
+                    logger.info("🎉 SUCCESS! CAPTCHA has been solved!")
+                    logger.info(f"✅ Total time: {int(time.time() - start_time)} seconds")
+                    return True
+                
+                if container_status in ["failed", "timeout"]:
+                    logger.info(f"❌ CAPTCHA solving failed: {container_status}")
+                    return False
+                
+                # Periodic status updates
+                current_time = time.time()
+                if current_time - last_status_time >= status_interval:
+                    elapsed = int(current_time - start_time)
+                    remaining = int(self.timeout - elapsed)
+                    
+                    logger.info(f"⏳ Still solving... ({elapsed//60}:{elapsed%60:02d} elapsed, ~{remaining//60} min remaining)")
+                    logger.info(f"   Container Status: {container_status}")
+                    logger.info(f"   VNC Interface: {status.get('auto_connect_url', 'N/A')}")
+                    
+                    # Check if browser is accessible
+                    if self._check_vnc_accessibility(status.get('novnc_port')):
+                        logger.info("   🌐 VNC interface is accessible and ready")
+                    else:
+                        logger.info("   ⏳ VNC interface still initializing...")
+                    
+                    last_status_time = current_time
+                
+                # Check more frequently for completion
+                time.sleep(15)
+                
+            except KeyboardInterrupt:
+                logger.info("\n⚠️ Interrupted by user")
+                logger.info(f"Container {container_id[:12]} is still running - you can reconnect manually")
+                logger.info(f"Or use: docker stop {container_id}")
+                return False
+            except Exception as e:
+                logger.warning(f"⚠️ Status check error: {e}")
+                time.sleep(30)
+                continue
         
-        print(instructions)
-        
-        # Also save instructions to file
-        instructions_file = f"/app/shared_volume/captcha_instructions_{session_id}.txt"
-        with open(instructions_file, 'w') as f:
-            f.write(instructions)
+        # Timeout reached
+        logger.info(f"⏰ TIMEOUT: CAPTCHA solving took longer than {self.timeout//60} minutes")
+        logger.info(f"Container {container_id[:12]} will be stopped automatically")
+        return False
     
-    def _wait_for_browser_resolution(self, session_id: str, email: str) -> bool:
-        """Wait for captcha resolution via web interface"""
+    def _wait_for_queue_processing(self, job_id: str) -> bool:
+        """Wait for queued job to be processed"""
+        # This could be enhanced with WebSocket updates
+        # For now, simple polling
+        timeout = 300  # 5 minutes to wait for queue processing
         start_time = time.time()
         
-        while time.time() - start_time < self.max_wait_time:
-            try:
-                # Check if session was resolved
-                if session_id in self.captcha_sessions:
-                    session = self.captcha_sessions[session_id]
-                    
-                    if session['status'] == 'resolved':
-                        logger.info(f"[CAPTCHA] ✅ Browser captcha resolved for: {email}")
-                        # Cleanup
-                        del self.captcha_sessions[session_id]
-                        return True
-                    elif session['status'] == 'failed':
-                        logger.warning(f"[CAPTCHA] ❌ Browser captcha failed for: {email}")
-                        del self.captcha_sessions[session_id]
-                        return False
-                
-                # Progress update every minute
-                elapsed = time.time() - start_time
-                if int(elapsed) % 60 == 0 and elapsed > 0:
-                    remaining = (self.max_wait_time - elapsed) / 60
-                    print(f"⏰ Still waiting for browser resolution... {remaining:.1f} minutes remaining")
-                
-                time.sleep(10)  # Check every 10 seconds
-                
-            except Exception as e:
-                logger.warning(f"[CAPTCHA] Error during browser wait: {e}")
-                time.sleep(5)
+        while time.time() - start_time < timeout:
+            queue_status = self.automated_handler.queue.get_queue_status()
+            logger.info(f"📋 Queue status: {queue_status['queue_length']} waiting, {queue_status['active_containers']}/{queue_status['max_containers']} active")
+            
+            # Check if our job started (would need to implement job tracking)
+            # For now, just wait and retry
+            time.sleep(30)
         
-        # Timeout
-        logger.warning(f"[CAPTCHA] ❌ Browser captcha timeout for {email}")
-        if session_id in self.captcha_sessions:
-            del self.captcha_sessions[session_id]
+        logger.info("⏰ Queue timeout - please try again later")
         return False
     
-    def mark_session_resolved(self, session_id: str) -> bool:
-        """Mark captcha session as resolved (called from web interface)"""
-        if session_id in self.captcha_sessions:
-            self.captcha_sessions[session_id]['status'] = 'resolved'
-            self.captcha_sessions[session_id]['resolved_at'] = time.time()
-            logger.info(f"[CAPTCHA] Session {session_id} marked as resolved")
-            return True
-        return False
+    def _check_vnc_accessibility(self, port: int) -> bool:
+        """Check if VNC web interface is accessible"""
+        try:
+            import requests
+            response = requests.get(f"http://localhost:{port}/", timeout=5)
+            return response.status_code == 200
+        except:
+            return False
     
-    def mark_session_failed(self, session_id: str) -> bool:
-        """Mark captcha session as failed (called from web interface)"""
-        if session_id in self.captcha_sessions:
-            self.captcha_sessions[session_id]['status'] = 'failed'
-            self.captcha_sessions[session_id]['failed_at'] = time.time()
-            logger.info(f"[CAPTCHA] Session {session_id} marked as failed")
-            return True
-        return False
-    
-    def get_session_data(self, session_id: str) -> dict:
-        """Get captcha session data (for web interface)"""
-        return self.captcha_sessions.get(session_id, {})
-    
-    def get_all_pending_sessions(self) -> dict:
-        """Get all pending captcha sessions"""
+    def get_active_captcha_sessions(self) -> Dict:
+        """Get information about all active CAPTCHA sessions"""
+        manager = get_manager()
+        active_containers = manager.get_active_containers()
+        
+        sessions = []
+        for container in active_containers:
+            sessions.append({
+                "container_id": container["container_id"],
+                "email": container["email"],
+                "status": container["status"],
+                "uptime_minutes": int(container["uptime"] // 60),
+                "vnc_url": f"http://localhost:{container['novnc_port']}/auto_connect.html",
+                "direct_vnc": f"localhost:{container['vnc_port']}"
+            })
+        
         return {
-            sid: data for sid, data in self.captcha_sessions.items() 
-            if data.get('status') == 'pending'
+            "active_sessions": len(sessions),
+            "max_capacity": manager.max_containers,
+            "sessions": sessions
         }
-
-# Global instance for use across the application
-browser_captcha_handler = BrowserCaptchaHandler()
-
-# Alias for compatibility
-CaptchaHandler = BrowserCaptchaHandler
+    
+    def stop_captcha_session(self, email: str = None, container_id: str = None) -> bool:
+        """Stop a specific CAPTCHA session"""
+        manager = get_manager()
+        
+        if container_id:
+            return manager.stop_container(container_id)
+        elif email:
+            # Find container by email
+            active_containers = manager.get_active_containers()
+            for container in active_containers:
+                if container["email"] == email:
+                    return manager.stop_container(container["container_id"])
+        
+        return False

@@ -23,6 +23,8 @@ RUN apt-get update && apt-get install -y \
     libvulkan1 \
     xdg-utils \
     python3-dev \
+    docker.io \
+    docker-compose \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем Google Chrome

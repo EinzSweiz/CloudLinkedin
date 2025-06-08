@@ -11,6 +11,7 @@ services:
     volumes:
       - .:/app
       - logs:/app/logs
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8001:8001"
     depends_on:
@@ -19,6 +20,7 @@ services:
       - celery
       - beat
       - rabbitmq
+      - captcha_watcher
     command: >
       sh -c "
       python manage.py makemigrations &&
@@ -29,6 +31,8 @@ services:
     dns:
       - 8.8.8.8
       - 8.8.4.4
+    networks:
+      - app-network
     restart: always
 
   captcha_watcher:
@@ -39,10 +43,12 @@ services:
     ports:
       - "5900:5900"  # VNC port
       - "6080:6080"  # noVNC web port
+    image: captcha_watcher_image:latest
     volumes:
       - ./shared_volume:/app/shared_volume
       - ./cookies:/app/cookies
       - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - DISPLAY=:0
       - PYTHONPATH=/app
@@ -54,6 +60,8 @@ services:
     - 8.8.8.8
     - 1.1.1.1
     restart: always
+    networks:
+      - app-network
     deploy:
       resources:
         limits:
@@ -66,6 +74,7 @@ services:
     command: celery -A b2b_linkedin_app worker --loglevel=info
     volumes:
       - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
     env_file:
       - .env
     depends_on:
@@ -76,6 +85,8 @@ services:
     dns:
       - 8.8.8.8
       - 8.8.4.4
+    networks:
+      - app-network
     restart: always
 
   beat:
@@ -95,6 +106,8 @@ services:
     dns:
       - 8.8.8.8
       - 8.8.4.4
+    networks:
+      - app-network
     restart: always
 
   db:
@@ -107,6 +120,8 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - app-network
     ports:
       - "5433:5432"
 
@@ -118,6 +133,8 @@ services:
       - "6379:6379"
     volumes:
       - redisdata:/data
+    networks:
+      - app-network
     restart: always
 
   rabbitmq:
@@ -130,6 +147,8 @@ services:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
     restart: always
+    networks:
+      - app-network
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
       interval: 30s
@@ -140,3 +159,8 @@ volumes:
   logs:
   redisdata:
   postgres_data:
+
+
+networks:
+  app-network:
+    driver: bridge

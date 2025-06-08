@@ -29,8 +29,7 @@ HUNTER_API_KEY = config('HUNTER_API_KEY', cast=str, default=None)
 MAILGUN_DOMAIN=config('MAILGUN_DOMAIN', cast=str, default=None)
 MAILGUN_API_KEY=config('MAILGUN_API_KEY', cast=str, default=None)
 
-# Application definition
-
+#APP
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -38,16 +37,19 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     #Apps for LinkedIn parser
     "mailer",
     "parser_controler",
     "django_celery_beat",
     'django_celery_results',
+    'rest_framework',
     'authorization',
     'payments',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -57,6 +59,41 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# CORS Configuration
+CORS_ALLOW_ALL_ORIGINS = True  # For development only!
+
+# For production, use specific origins:
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:6080",
+#     "http://127.0.0.1:6080",
+#     "ws://localhost:6080",
+#     "wss://localhost:6080",
+# ]
+
+# Allow WebSocket connections
+CORS_ALLOW_CREDENTIALS = True
+
+# Allow WebSocket headers
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'sec-websocket-key',
+    'sec-websocket-protocol',
+    'sec-websocket-version',
+    'upgrade',
+    'connection',
+]
+
+# Add localhost to allowed hosts
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 
 ROOT_URLCONF = 'b2b_linkedin_app.urls'
 

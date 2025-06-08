@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from payments.urls import urlpatterns as payment_urls
 from parser_controler.urls import urlpatterns as parser_urls
+from . import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,5 +27,8 @@ urlpatterns = [
     path('payment/', include(payment_urls)),
     path('login/', auth_views.LoginView.as_view(), name='login'),  # встроенный шаблон
     path("", include(parser_urls)),
+    path('vnc-monitor/', views.vnc_monitor, name='vnc_monitor'),
+    path('api/vnc-status/', views.vnc_status_api, name='vnc_status_api'),
+    path('api/vnc-ports/', views.check_vnc_ports, name='vnc_ports_api'),
 
 ]

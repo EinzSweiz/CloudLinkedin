@@ -1,0 +1,122 @@
+{
+  "email": "kyleoaks1960@progressivfmals.com",
+  "current_url": "https://www.linkedin.com/checkpoint/lg/login-submit",
+  "cookies": [
+    {
+      "domain": ".www.linkedin.com",
+      "expiry": 1780916852,
+      "httpOnly": true,
+      "name": "li_rm",
+      "path": "/",
+      "sameSite": "None",
+      "secure": true,
+      "value": "AQFFHA590FBnEQAAAZdPOWiaHYxaJvaNkktJJkp0d8PQCb52dFi20lUJ4XSC7QBeU2qkERJY9dgRW72D1BYKbXa6luoiu0e4EIi6lXLA-8C4VEiGqui3IeJE"
+    },
+    {
+      "domain": ".linkedin.com",
+      "httpOnly": false,
+      "name": "AMCVS_14215E3D5995C57C0A495C55%40AdobeOrg",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": false,
+      "value": "1"
+    },
+    {
+      "domain": ".linkedin.com",
+      "expiry": 1757156861,
+      "httpOnly": false,
+      "name": "_gcl_au",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": false,
+      "value": "1.1.1045389612.1749380861"
+    },
+    {
+      "domain": ".linkedin.com",
+      "expiry": 1749467190,
+      "httpOnly": false,
+      "name": "lidc",
+      "path": "/",
+      "sameSite": "None",
+      "secure": true,
+      "value": "\"b=TGST08:s=T:r=T:a=T:p=T:g=3060:u=1:x=1:i=1749380790:t=1749467190:v=2:sig=AQHGijwZis0J7TiFXP1Z9ZgHeBbH26jD\""
+    },
+    {
+      "domain": ".linkedin.com",
+      "expiry": 1749382590,
+      "httpOnly": true,
+      "name": "__cf_bm",
+      "path": "/",
+      "sameSite": "None",
+      "secure": true,
+      "value": "TOeAqsSNe68A5wOAj5ssn7VARyEx2mpan29XDc51DM0-1749380790-1.0.1.1-f7k2mnL.WHDzB4PyIE_s1J5wx01kNbsGV3lVE0LhbIe4cqSv_asJCfC_wJhvNk4LfPVzGiyTOgZIuFLzPksARNuZfSi3SOJp_BPkfACdesI"
+    },
+    {
+      "domain": ".www.linkedin.com",
+      "httpOnly": false,
+      "name": "JSESSIONID",
+      "path": "/",
+      "sameSite": "None",
+      "secure": true,
+      "value": "ajax:8518839737262728299"
+    },
+    {
+      "domain": ".linkedin.com",
+      "expiry": 1780916851,
+      "httpOnly": false,
+      "name": "bcookie",
+      "path": "/",
+      "sameSite": "None",
+      "secure": true,
+      "value": "\"v=2&1e4c2988-0283-40bc-8cbd-1a6f22f3684b\""
+    },
+    {
+      "domain": ".linkedin.com",
+      "expiry": 1764932792,
+      "httpOnly": false,
+      "name": "AMCV_14215E3D5995C57C0A495C55%40AdobeOrg",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": false,
+      "value": "-637568504%7CMCIDTS%7C20248%7CMCMID%7C38386556831190033522101068833063799668%7CMCAAMLH-1749985592%7C6%7CMCAAMB-1749985592%7C6G1ynYcLPuiQxYZrsz_pkqfLG9yMXBpb2zX5dvJdYQJzPXImdj0y%7CMCOPTOUT-1749387992s%7CNONE%7CvVersion%7C5.1.1"
+    },
+    {
+      "domain": ".www.linkedin.com",
+      "expiry": 1780916851,
+      "httpOnly": true,
+      "name": "bscookie",
+      "path": "/",
+      "sameSite": "None",
+      "secure": true,
+      "value": "\"v=1&20250608110630e53dbcf6-c53f-4ba4-80ac-164405727037AQGfD06Jf8eH2BSAOzMV7D_RGOfrjnZA\""
+    },
+    {
+      "domain": ".linkedin.com",
+      "expiry": 1751972860,
+      "httpOnly": false,
+      "name": "aam_uuid",
+      "path": "/",
+      "sameSite": "Lax",
+      "secure": false,
+      "value": "38580480288104952512154780851116406975"
+    },
+    {
+      "domain": ".linkedin.com",
+      "httpOnly": false,
+      "name": "lang",
+      "path": "/",
+      "sameSite": "None",
+      "secure": true,
+      "value": "v=2&lang=en-us"
+    }
+  ],
+  "page_source": "<html lang=\"en-US\" class=\"artdeco \"><head>\n        \n        <meta http-equiv=\"X-UA-Compatible\" content=\"IE=EDGE\">\n        <meta charset=\"UTF-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n        <meta name=\"asset-url\" id=\"artdeco/static/images/icons.svg\" content=\"https://static.licdn.com/sc/h/6bja66gymvrvqrp5m6btz3vkz\">\n        <title>\n            \n          LinkedIn Login, Sign in | LinkedIn\n      \n        </title>\n        <link rel=\"shortcut icon\" href=\"https://static.licdn.com/sc/h/9lb1g1kp916tat669q9r5g2kz\">\n        <link rel=\"apple-touch-icon\" href=\"https://static.licdn.com/sc/h/1exdo4axa6eaw1jioxh1vu4fj\">\n        <link rel=\"apple-touch-icon-precomposed\" href=\"https://static.licdn.com/sc/h/55ggxxse8uyjdh2x78ht3j40q\">\n        <link rel=\"apple-touch-icon-precomposed\" sizes=\"57x57\" href=\"https://static.licdn.com/sc/h/1exdo4axa6eaw1jioxh1vu4fj\">\n        <link rel=\"apple-touch-icon-precomposed\" sizes=\"144x144\" href=\"https://static.licdn.com/sc/h/55ggxxse8uyjdh2x78ht3j40q\">\n        <meta name=\"treeID\" content=\"AAY3DXh39ytyP6HvwLTF7Q==\">\n        <meta name=\"pageKey\" content=\"d_checkpoint_lg_consumerLogin\">\n        <meta name=\"pageInstance\" content=\"urn:li:page:checkpoint_lg_login_submit_default;MGkP/O9fROCC9WEAXhBr+g==\">\n        <meta id=\"heartbeat_config\" data-enable-page-view-heartbeat-tracking=\"\">\n          <meta name=\"appName\" content=\"checkpoint-frontend\">\n<!----><!---->\n        \n        <meta name=\"description\" content=\"Login to LinkedIn to keep in touch with people you know, share ideas, and build your career.\">\n        <meta name=\"robots\" content=\"noarchive\">\n        <meta property=\"og:site_name\" content=\"LinkedIn\">\n        <meta property=\"og:title\" content=\"LinkedIn Login, Sign in | LinkedIn\">\n        <meta property=\"og:description\" content=\"Login to LinkedIn to keep in touch with people you know, share ideas, and build your career.\">\n        <meta property=\"og:type\" content=\"website\">\n        <meta property=\"og:url\" content=\"https://www.linkedin.com\">\n          <meta property=\"og:image\" content=\"https://static.licdn.com/scds/common/u/images/logos/favicons/v1/favicon.ico\">\n        <meta name=\"twitter:card\" content=\"summary\">\n        <meta name=\"twitter:site\" content=\"@linkedin\">\n        <meta name=\"twitter:title\" content=\"LinkedIn Login, Sign in | LinkedIn\">\n        <meta name=\"twitter:description\" content=\"Login to LinkedIn to keep in touch with people you know, share ideas, and build your career.\">\n        \n        \n      \n          <meta property=\"al:android:url\" content=\"https://www.linkedin.com/login\">\n          <meta property=\"al:android:package\" content=\"com.linkedin.android\">\n          <meta property=\"al:android:app_name\" content=\"LinkedIn\">\n          <meta property=\"al:ios:app_store_id\" content=\"288429040\">\n          <meta property=\"al:ios:app_name\" content=\"LinkedIn\">\n\n          \n        \n        <link rel=\"stylesheet\" href=\"https://static.licdn.com/sc/h/aqyadolt0wu7chazdqaa989fi\">\n      \n        \n        \n          \n    <link rel=\"canonical\" href=\"https://www.linkedin.com/login\">\n\n    <link rel=\"alternate\" hreflang=\"ar\" href=\"https://www.linkedin.com/login/ar\">\n    <link rel=\"alternate\" hreflang=\"cs\" href=\"https://www.linkedin.com/login/cs\">\n    <link rel=\"alternate\" hreflang=\"da\" href=\"https://www.linkedin.com/login/da\">\n    <link rel=\"alternate\" hreflang=\"de\" href=\"https://www.linkedin.com/login/de\">\n    <link rel=\"alternate\" hreflang=\"en\" href=\"https://www.linkedin.com/login\">\n    <link rel=\"alternate\" hreflang=\"es\" href=\"https://www.linkedin.com/login/es\">\n    <link rel=\"alternate\" hreflang=\"fr\" href=\"https://www.linkedin.com/login/fr\">\n    <link rel=\"alternate\" hreflang=\"hi\" href=\"https://www.linkedin.com/login/hi\">\n    <link rel=\"alternate\" hreflang=\"id\" href=\"https://www.linkedin.com/login/id\">\n    <link rel=\"alternate\" hreflang=\"it\" href=\"https://www.linkedin.com/login/it\">\n    <link rel=\"alternate\" hreflang=\"ja\" href=\"https://www.linkedin.com/login/ja\">\n    <link rel=\"alternate\" hreflang=\"ko\" href=\"https://www.linkedin.com/login/ko\">\n    <link rel=\"alternate\" hreflang=\"ms\" href=\"https://www.linkedin.com/login/ms\">\n    <link rel=\"alternate\" hreflang=\"nl\" href=\"https://www.linkedin.com/login/nl\">\n    <link rel=\"alternate\" hreflang=\"no\" href=\"https://www.linkedin.com/login/no\">\n    <link rel=\"alternate\" hreflang=\"pl\" href=\"https://www.linkedin.com/login/pl\">\n    <link rel=\"alternate\" hreflang=\"pt\" href=\"https://www.linkedin.com/login/pt\">\n    <link rel=\"alternate\" hreflang=\"ro\" href=\"https://www.linkedin.com/login/ro\">\n    <link rel=\"alternate\" hreflang=\"ru\" href=\"https://www.linkedin.com/login/ru\">\n    <link rel=\"alternate\" hreflang=\"sv\" href=\"https://www.linkedin.com/login/sv\">\n    <link rel=\"alternate\" hreflang=\"th\" href=\"https://www.linkedin.com/login/th\">\n    <link rel=\"alternate\" hreflang=\"tl\" href=\"https://www.linkedin.com/login/tl\">\n    <link rel=\"alternate\" hreflang=\"tr\" href=\"https://www.linkedin.com/login/tr\">\n    <link rel=\"alternate\" hreflang=\"zh\" href=\"https://www.linkedin.com/login/zh\">\n    <link rel=\"alternate\" hreflang=\"zh-cn\" href=\"https://www.linkedin.com/login/zh\">\n    <link rel=\"alternate\" hreflang=\"zh-tw\" href=\"https://www.linkedin.com/login/zh-tw\">\n    <link rel=\"alternate\" hreflang=\"x-default\" href=\"https://www.linkedin.com/login\">\n  \n        \n      \n        \n          <link rel=\"preload\" href=\"https://static.licdn.com/sc/h/8k946zsych0pr4qdyh5x3an5e\">\n          <link rel=\"preload\" href=\"https://static.licdn.com/sc/h/2nrnip1h2vmblu8dissh3ni93\">\n<!---->        <link rel=\"preload\" href=\"https://static.licdn.com/sc/h/ce1b60o9xz87bra38gauijdx4\">\n        <link rel=\"preload\" href=\"https://static.licdn.com/sc/h/zf50zdwg8datnmpgmdbkdc4r\">\n      \n      \n        <link rel=\"preload\" href=\"https://static.licdn.com/sc/h/dhgp8e0aw4tqx03x62vl6i4f2\">\n        <link rel=\"preload\" href=\"https://static.licdn.com/sc/h/e3hhrci04t36w54zj5mgcvone\">\n      \n      <script type=\"text/javascript\" async=\"\" src=\"https://www.googletagmanager.com/gtag/js?id=AW-979305453&amp;cx=c&amp;gtm=453e5641za200&amp;tag_exp=101509157~103116026~103200004~103233427~103351869~103351871~104653070~104653072~104661466~104661468~104698127~104698129\"></script><script type=\"text/javascript\" async=\"\" charset=\"utf-8\" id=\"utag_122\" src=\"https://www.googletagmanager.com/gtag/js\"></script><script src=\"https://static.licdn.com/sc/h/aofke6z5sqc44bjlvj6yr05c8\"></script><script src=\"https://static.licdn.com/sc/h/1gpe377m8n1eq73qveizv5onv\"></script><script type=\"text/javascript\" src=\"https://platform.linkedin.com/litms/utag/checkpoint-frontend/utag.js?cb=1749380700000\" async=\"\"></script><script type=\"text/javascript\" async=\"\" charset=\"utf-8\" id=\"utag_linkedin.checkpoint-frontend_107\" src=\"//platform.linkedin.com/litms/utag/checkpoint-frontend/utag.107.js?utv=ut4.51.202502041938\"></script><script attributionsrc=\"\" type=\"text/javascript\" async=\"\" src=\"https://www.googleadservices.com/pagead/conversion/979305453/?random=1749380861401&amp;cv=11&amp;fst=1749380861401&amp;bg=ffffff&amp;guid=ON&amp;async=1&amp;gcl_ctr=1&amp;gtm=45be5641v873428484za200&amp;gcs=G110&amp;gcd=13r3q3X3r7l1&amp;dma=0&amp;tag_exp=101509157~103116026~103200004~103233427~103351869~103351871~104653070~104653072~104661466~104661468~104698127~104698129&amp;u_w=800&amp;u_h=600&amp;url=https%3A%2F%2Fwww.linkedin.com%2Fcheckpoint%2Flg%2Flogin-submit&amp;ref=https%3A%2F%2Fwww.linkedin.com%2Flogin&amp;label=ZRKoCICMpsUBEO2H_NID&amp;hn=www.googleadservices.com&amp;frm=0&amp;tiba=LinkedIn%20Login%2C%20Sign%20in%20%7C%20LinkedIn&amp;oid=2193164967027337&amp;did=dYmQxMT&amp;gdid=dYmQxMT&amp;gtm_ee=1&amp;npa=1&amp;pscdl=noapi&amp;auid=1045389612.1749380861&amp;ec_m=%23username*INPUT%3Atrue%3A32%3Afalse*1&amp;ec_sel=%23username&amp;ec_meta=INPUT%3Atrue%3A32%3Afalse&amp;ec_lat=1&amp;ec_s=1&amp;fdr=CA&amp;capi=1&amp;_tu=CA&amp;data=event%3Dconversion&amp;rfmt=3&amp;fmt=4\"></script></head>\n      <body class=\"system-fonts \">\n        \n          \n\n    \n    <div id=\"app__container\" class=\"glimmer\">\n      <header>\n        \n              \n        \n        \n    \n\n    <a class=\"linkedin-logo\" href=\"/\" aria-label=\"LinkedIn\">\n        \n\n        <li-icon aria-label=\"LinkedIn\" size=\"28dp\" alt=\"LinkedIn\" color=\"brand\" type=\"linkedin-logo\">\n            <svg width=\"102\" height=\"26\" viewBox=\"0 0 102 26\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" id=\"linkedin-logo\" preserveAspectRatio=\"xMinYMin meet\" focusable=\"false\">\n                <path d=\"M13 10H17V22H13V10ZM15 3.8C14.5671 3.80984 14.1468 3.94718 13.7917 4.19483C13.4365 4.44247 13.1623 4.7894 13.0035 5.19217C12.8446 5.59493 12.8081 6.03562 12.8985 6.45903C12.989 6.88244 13.2024 7.26975 13.5119 7.57245C13.8215 7.87514 14.2135 8.07976 14.6389 8.16067C15.0642 8.24159 15.504 8.1952 15.903 8.02732C16.3021 7.85943 16.6428 7.57752 16.8824 7.2169C17.122 6.85627 17.2499 6.43297 17.25 6C17.2515 5.70645 17.1939 5.4156 17.0807 5.14474C16.9675 4.87388 16.801 4.62854 16.5911 4.42331C16.3812 4.21808 16.1322 4.05714 15.8589 3.95006C15.5855 3.84299 15.2934 3.79195 15 3.8ZM4 4H0V22H11V18H4V4ZM57.9 16.2C57.9 16.61 57.9 16.86 57.9 17H48.9C48.9021 17.169 48.9256 17.337 48.97 17.5C49.1765 18.0933 49.5745 18.6011 50.1014 18.9433C50.6282 19.2855 51.254 19.4427 51.88 19.39C52.4142 19.4129 52.9468 19.3171 53.4396 19.1096C53.9324 18.9021 54.3731 18.5881 54.73 18.19L57.45 19.87C56.7533 20.6812 55.88 21.322 54.8971 21.7433C53.9142 22.1645 52.8479 22.3549 51.78 22.3C48.19 22.3 45.12 20.25 45.12 16.11C45.091 15.2506 45.2411 14.3946 45.5608 13.5963C45.8804 12.798 46.3626 12.075 46.9767 11.4731C47.5908 10.8712 48.3234 10.4037 49.128 10.1001C49.9325 9.7966 50.7914 9.66374 51.65 9.71C55.08 9.71 57.9 12 57.9 16.2ZM54.15 14.69C54.16 14.3669 54.0997 14.0455 53.9731 13.748C53.8466 13.4506 53.6569 13.1842 53.4172 12.9673C53.1775 12.7504 52.8935 12.5883 52.5849 12.492C52.2763 12.3958 51.9505 12.3678 51.63 12.41C50.9638 12.3515 50.3013 12.558 49.7865 12.9849C49.2716 13.4118 48.9459 14.0245 48.88 14.69H54.15ZM68 4H72V22H68.61V20.57C68.1486 2",
+  "timestamp": 1749380863.245659,
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Brave/122.0.0.0",
+  "window_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "local_storage": "{\"_gcl_ls\":\"{\\\"schema\\\":\\\"gcl\\\",\\\"version\\\":1,\\\"gcl_ctr\\\":{\\\"value\\\":{\\\"value\\\":1,\\\"creationTimeMs\\\":1749380861404},\\\"expires\\\":1757156861404}}\"}",
+  "session_storage": "{}"
+}
