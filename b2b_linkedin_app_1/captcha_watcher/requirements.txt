@@ -1,0 +1,7 @@
+undetected-chromedriver==3.5.5
+selenium
+requests==2.31.0
+certifi>=2023.7.22
+numpy
+django-cors-headers
+websockify

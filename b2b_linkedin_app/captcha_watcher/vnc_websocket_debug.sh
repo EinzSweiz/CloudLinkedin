@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # VNC WebSocket Data Flow Diagnostic
-# Run this inside your Docker container to debug the silent connection issue
 
-echo "🔍 VNC WebSocket Data Flow Analysis"
+echo "VNC WebSocket Data Flow Analysis"
 echo "===================================="
 
 export DISPLAY=:0
@@ -29,7 +28,7 @@ if [ -f "/tmp/x11vnc_full.log" ]; then
     echo -e "\nSearching for framebuffer updates in log:"
     grep -i "framebuffer\|update\|rect\|damage" /tmp/x11vnc_full.log | tail -5
 else
-    echo "❌ x11vnc debug log not found at /tmp/x11vnc_full.log"
+    echo "x11vnc debug log not found at /tmp/x11vnc_full.log"
 fi
 
 echo -e "\n3. Testing direct VNC connection..."
@@ -112,27 +111,27 @@ ps aux | grep x11vnc | grep -v grep | while read line; do
     
     # Check for problematic flags
     if echo "$line" | grep -q "\-noxdamage"; then
-        echo "✅ Using -noxdamage (good for debugging)"
+        echo "Using -noxdamage (good for debugging)"
     fi
     
     if echo "$line" | grep -q "\-noxfixes"; then
-        echo "✅ Using -noxfixes (good for debugging)"  
+        echo "Using -noxfixes (good for debugging)"  
     fi
     
     if echo "$line" | grep -q "\-solid"; then
-        echo "⚠️ Using -solid background (may reduce updates)"
+        echo "Using -solid background (may reduce updates)"
     fi
 done
 
-echo -e "\n🎯 DIAGNOSIS RESULTS:"
+echo -e "\n DIAGNOSIS RESULTS:"
 echo "====================="
 
 # Test if the issue is in the websocket bridge
 if netstat -ln | grep ":5900 " >/dev/null && netstat -ln | grep ":6080 " >/dev/null; then
-    echo "✅ Both VNC (5900) and WebSocket (6080) ports are bound"
+    echo "Both VNC (5900) and WebSocket (6080) ports are bound"
     
     # The issue is likely in the data bridge
-    echo "🔍 LIKELY ISSUE: Data bridging between VNC and WebSocket"
+    echo "LIKELY ISSUE: Data bridging between VNC and WebSocket"
     echo ""
     echo "IMMEDIATE FIXES TO TRY:"
     echo "1. Restart websockify with verbose logging:"
@@ -146,10 +145,10 @@ if netstat -ln | grep ":5900 " >/dev/null && netstat -ln | grep ":6080 " >/dev/n
     echo "   Remove -solid black and -noxdamage to see if data flows"
     
 else
-    echo "❌ Port binding issue detected"
+    echo "Port binding issue detected"
 fi
 
-echo -e "\n🔧 NEXT STEPS:"
+echo -e "\n NEXT STEPS:"
 echo "1. Run the immediate fixes above"
 echo "2. Check websockify logs with: tail -f /var/log/supervisor/novnc.log"
 echo "3. Try connecting with verbose VNC client to see raw data flow"

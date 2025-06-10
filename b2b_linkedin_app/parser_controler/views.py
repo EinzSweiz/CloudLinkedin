@@ -6,6 +6,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from rest_framework.decorators import api_view
 import json
 import time
+from .models import ParsingInfo, ParserRequest
+import redis
 import logging
 from typing import Iterator
 
@@ -48,7 +50,7 @@ def start_automated_captcha_solver(request):
                 "status": "error"
             }, status=400)
         
-        logger.info(f"🚀 Starting automated CAPTCHA solver for: {email}")
+        logger.info(f"Starting automated CAPTCHA solver for: {email}")
         
         # Use the fully automated handler
         handler = AutomatedCaptchaHandler()
@@ -70,11 +72,11 @@ def start_automated_captcha_solver(request):
                 "estimated_time": result.get("estimated_time", "5-15 minutes"),
                 "instructions": result.get("instructions", []),
                 "automation_features": [
-                    "✅ Container auto-started",
-                    "✅ VNC will auto-connect", 
-                    "✅ Browser auto-opening" if auto_open else "🔗 Manual browser access",
-                    "✅ Real-time monitoring active",
-                    "✅ Auto-cleanup on completion"
+                    "Container auto-started",
+                    "VNC will auto-connect", 
+                    "Browser auto-opening" if auto_open else "Manual browser access",
+                    "Real-time monitoring active",
+                    "Auto-cleanup on completion"
                 ]
             })
         
@@ -95,7 +97,7 @@ def start_automated_captcha_solver(request):
             }, status=500)
             
     except Exception as e:
-        logger.error(f"❌ Automated CAPTCHA start error: {e}")
+        logger.error(f"Automated CAPTCHA start error: {e}")
         return JsonResponse({
             "status": "error", 
             "error": str(e),
@@ -164,7 +166,7 @@ def captcha_container_status(request, container_id):
         return JsonResponse(status_data)
         
     except Exception as e:
-        logger.error(f"❌ Status check error: {e}")
+        logger.error(f"Status check error: {e}")
         return JsonResponse({
             "error": str(e),
             "container_id": container_id
@@ -214,7 +216,7 @@ def active_captcha_sessions(request):
         })
         
     except Exception as e:
-        logger.error(f"❌ Active sessions error: {e}")
+        logger.error(f"Active sessions error: {e}")
         return JsonResponse({
             "error": str(e),
             "active_sessions": 0,
@@ -243,7 +245,7 @@ def stop_captcha_container(request, container_id):
             }, status=500)
             
     except Exception as e:
-        logger.error(f"❌ Stop container error: {e}")
+        logger.error(f"Stop container error: {e}")
         return JsonResponse({
             "status": "error",
             "error": str(e),
@@ -276,7 +278,7 @@ def cleanup_dead_containers(request):
         })
         
     except Exception as e:
-        logger.error(f"❌ Cleanup error: {e}")
+        logger.error(f"Cleanup error: {e}")
         return JsonResponse({
             "status": "error",
             "error": str(e)
@@ -433,14 +435,14 @@ def captcha_webhook(request):
                                             
                     manager._save_container(container)
                     
-                    logger.info(f"📬 Webhook: {email} CAPTCHA {status}")
+                    logger.info(f"Webhook: {email} CAPTCHA {status}")
                     
                     return JsonResponse({"status": "success"})
             
             return JsonResponse({"error": "Invalid webhook data"}, status=400)
             
         except Exception as e:
-            logger.error(f"❌ Webhook error: {e}")
+            logger.error(f"Webhook error: {e}")
             return JsonResponse({"error": str(e)}, status=500)
     
     return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -512,3 +514,106 @@ def health_check(request):
             "error": str(e),
             "timestamp": time.time()
         }, status=500)
+    
+
+@staff_member_required
+def dashboard_view(request, request_id):
+    """Simple dashboard view"""
+    context = {
+        'request_id': request_id,
+        'title': f'Parsing Dashboard - Request {request_id}'
+    }
+    return render(request, 'admin/parsing_dashboard.html', context)
+
+@staff_member_required
+def api_parsing_status(request, request_id):
+    """API endpoint for real-time parsing status"""
+    try:
+        # Get parsing statistics for this request
+        parser_request = ParserRequest.objects.get(id=request_id)
+        profiles = ParsingInfo.objects.all().order_by('-id')[:50]  # Get recent profiles
+        
+        # Calculate statistics
+        total_profiles = profiles.count()
+        profiles_with_email = profiles.exclude(email__isnull=True).exclude(email__exact='').count()
+        success_rate = round((profiles_with_email / total_profiles * 100)) if total_profiles > 0 else 0
+        
+        # Get latest profiles for preview
+        latest_profiles = profiles.order_by('-id')[:8]
+        
+        return JsonResponse({
+            'status': 'success',
+            'stats': {
+                'profilesFound': total_profiles,
+                'emailsExtracted': profiles_with_email,
+                'pagesProcessed': min(total_profiles // 10 + 1, 10),
+                'successRate': success_rate
+            },
+            'latest_profiles': [
+                {
+                    'name': profile.full_name,
+                    'company': profile.company_name,
+                    'email': profile.email,
+                    'position': profile.position
+                }
+                for profile in latest_profiles
+            ],
+            'activities': [
+                {
+                    'icon': '👤',
+                    'message': f"Profile extracted: {profile.full_name}",
+                    'detail': f"@ {profile.company_name}",
+                    'timestamp': ''
+                }
+                for profile in latest_profiles[:5]
+            ]
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        })
+
+@staff_member_required
+def api_active_containers(request):
+    """API endpoint for VNC containers"""
+    try:
+        r = redis.Redis(host="redis", port=6379, decode_responses=True)
+        all_containers = r.hgetall("captcha_containers")
+        
+        active_containers = []
+        
+        for container_key, value in all_containers.items():
+            try:
+                data = json.loads(value)
+                status = data.get("status", "").lower()
+                
+                if status in ["starting", "ready", "solving"] and data.get("novnc_port"):
+                    active_containers.append({
+                        "container_id": data.get("container_id"),
+                        "email": data.get("email", "unknown"),
+                        "cred_id": data.get("cred_id"),
+                        "novnc_port": data.get("novnc_port"),
+                        "vnc_port": data.get("vnc_port"),
+                        "status": status,
+                        "created_at": data.get("created_at"),
+                        "auto_connect_url": f"http://localhost:{data.get('novnc_port')}/auto_connect.html"
+                    })
+                    
+            except json.JSONDecodeError:
+                continue
+        
+        return JsonResponse({
+            "status": "success",
+            "containers": active_containers,
+            "count": len(active_containers),
+            "timestamp": time.time()
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": str(e),
+            "containers": []
+        })

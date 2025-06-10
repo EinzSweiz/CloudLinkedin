@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Debug Tool</title>
+    <style>
+        body { font-family: monospace; margin: 20px; background: #f0f0f0; }
+        .container { background: white; padding: 20px; border-radius: 8px; max-width: 800px; }
+        .test-button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .test-button:hover { background: #0056b3; }
+        .test-button.success { background: #28a745; }
+        .test-button.error { background: #dc3545; }
+        .log { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin: 10px 0; border-radius: 4px; height: 300px; overflow-y: scroll; }
+        .status { padding: 8px; margin: 5px 0; border-radius: 4px; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🔍 WebSocket Connection Debug Tool</h2>
+        <p>Test different WebSocket endpoints to find what your server expects:</p>
+        
+        <div>
+            <button class="test-button" onclick="testEndpoint('')">Test: ws://localhost:6080/</button>
+            <button class="test-button" onclick="testEndpoint('websockify')">Test: ws://localhost:6080/websockify</button>
+            <button class="test-button" onclick="testEndpoint('vnc')">Test: ws://localhost:6080/vnc</button>
+            <button class="test-button" onclick="testEndpoint('ws')">Test: ws://localhost:6080/ws</button>
+        </div>
+        
+        <div>
+            <button class="test-button" onclick="testHTTP()">Test HTTP Server</button>
+            <button class="test-button" onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div id="currentStatus" class="status info">
+            Ready to test WebSocket endpoints
+        </div>
+        
+        <div class="log" id="logOutput">
+            Click buttons above to test different WebSocket endpoints...<br>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#6c757d';
+            logDiv.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span><br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('currentStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function testEndpoint(endpoint) {
+            const host = window.location.hostname || 'localhost';
+            const port = '6080';
+            const protocol = (window.location.protocol === 'https:') ? 'wss:' : 'ws:';
+            
+            let url;
+            if (endpoint) {
+                url = `${protocol}//${host}:${port}/${endpoint}`;
+            } else {
+                url = `${protocol}//${host}:${port}/`;
+            }
+            
+            log(`🔍 Testing WebSocket: ${url}`);
+            updateStatus(`Testing: ${url}`, 'info');
+            
+            const ws = new WebSocket(url);
+            const timeout = setTimeout(() => {
+                ws.close();
+                log(`❌ Timeout connecting to: ${url}`, 'error');
+                updateStatus(`Timeout: ${url}`, 'error');
+            }, 5000);
+            
+            ws.onopen = function(event) {
+                clearTimeout(timeout);
+                log(`✅ SUCCESS! Connected to: ${url}`, 'success');
+                updateStatus(`✅ Connected: ${url}`, 'success');
+                ws.close();
+            };
+            
+            ws.onerror = function(error) {
+                clearTimeout(timeout);
+                log(`❌ Failed to connect to: ${url} - ${error}`, 'error');
+                updateStatus(`❌ Failed: ${url}`, 'error');
+            };
+            
+            ws.onclose = function(event) {
+                if (event.wasClean) {
+                    log(`🔒 Connection closed cleanly: ${url}`, 'info');
+                } else {
+                    log(`🔒 Connection closed unexpectedly: ${url} (code: ${event.code})`, 'error');
+                }
+            };
+        }
+
+        function testHTTP() {
+            log('🌐 Testing HTTP server accessibility...');
+            updateStatus('Testing HTTP server...', 'info');
+            
+            const endpoints = ['/', '/vnc.html', '/app/', '/websockify'];
+            
+            endpoints.forEach(endpoint => {
+                fetch(`http://localhost:6080${endpoint}`)
+                    .then(response => {
+                        if (response.ok) {
+                            log(`✅ HTTP ${response.status}: http://localhost:6080${endpoint}`, 'success');
+                        } else {
+                            log(`⚠️ HTTP ${response.status}: http://localhost:6080${endpoint}`, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        log(`❌ HTTP Error: http://localhost:6080${endpoint} - ${error.message}`, 'error');
+                    });
+            });
+        }
+
+        function clearLog() {
+            document.getElementById('logOutput').innerHTML = 'Log cleared...<br>';
+            updateStatus('Ready to test WebSocket endpoints', 'info');
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', function() {
+            log('🚀 WebSocket Debug Tool loaded');
+            log('💡 Click buttons above to test different endpoints');
+            log('🎯 Look for the ✅ SUCCESS message to find the correct endpoint');
+        });
+    </script>
+</body>
+</html>

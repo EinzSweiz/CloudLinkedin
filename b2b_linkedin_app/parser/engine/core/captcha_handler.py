@@ -35,7 +35,7 @@ class FullyAutomatedCaptchaHandler:
             cred_id = email
             
         try:
-            logger.info(f"🤖 Starting fully automated CAPTCHA solving for: {email}")
+            logger.info(f"Starting fully automated CAPTCHA solving for: {email}")
             
             # Start automated container
             result = self.automated_handler.solve_captcha_automated(
@@ -45,13 +45,13 @@ class FullyAutomatedCaptchaHandler:
             )
             
             if result["status"] == "error":
-                logger.error(f"❌ Failed to start CAPTCHA solver: {result.get('error')}")
+                logger.error(f"Failed to start CAPTCHA solver: {result.get('error')}")
                 return False
             
             if result["status"] == "queued":
-                logger.info(f"📋 CAPTCHA request queued: {result.get('job_id')}")
+                logger.info(f"CAPTCHA request queued: {result.get('job_id')}")
                 logger.info(f"""
-🕒 CAPTCHA REQUEST QUEUED
+CAPTCHA REQUEST QUEUED
 ========================
 Email: {email}
 Job ID: {result.get('job_id')}
@@ -65,7 +65,7 @@ when a container becomes available.
             
             container_id = result.get("container_id")
             if not container_id:
-                logger.error("❌ No container ID returned")
+                logger.error("No container ID returned")
                 return False
             
             # Display user-friendly status
@@ -75,29 +75,29 @@ when a container becomes available.
             return self._wait_for_completion_with_updates(container_id, email)
             
         except Exception as e:
-            logger.error(f"❌ Automated CAPTCHA solving failed: {e}")
+            logger.error(f"Automated CAPTCHA solving failed: {e}")
             return False
     
     def _display_captcha_status(self, result: Dict):
         """Display user-friendly status information"""
         logger.info(f"""
-🚀 AUTOMATED CAPTCHA SOLVER ACTIVE
+AUTOMATED CAPTCHA SOLVER ACTIVE
 ===================================
 Email: {result['email']}
 Container: {result['container_id'][:12]}
 Status: {result['status'].upper()}
 
-🌐 VNC Interface: {result['auto_connect_url']}
-📺 Direct VNC: localhost:{result['vnc_port']}
+VNC Interface: {result['auto_connect_url']}
+Direct VNC: localhost:{result['vnc_port']}
 
-🤖 AUTOMATION STATUS:
-✅ Container started and initializing
-✅ VNC server starting up
-✅ Auto-connect interface preparing
-{'✅ Browser will auto-open in 5 seconds' if self.auto_open_browser else '🔗 Use the URL above to connect manually'}
+AUTOMATION STATUS:
+Container started and initializing
+VNC server starting up
+Auto-connect interface preparing
+{'Browser will auto-open in 5 seconds' if self.auto_open_browser else 'Use the URL above to connect manually'}
 
-⏳ Estimated time: {result.get('estimated_time', '5-15 minutes')}
-🔄 Monitoring for completion automatically...
+Estimated time: {result.get('estimated_time', '5-15 minutes')}
+Monitoring for completion automatically...
 
 INSTRUCTIONS:
 {chr(10).join(f'   {instruction}' for instruction in result.get('instructions', []))}
@@ -110,7 +110,7 @@ INSTRUCTIONS:
         last_status_time = 0
         status_interval = 60  # Update every minute
         
-        logger.info("🔄 Monitoring CAPTCHA solving progress...")
+        logger.info("Monitoring CAPTCHA solving progress...")
         logger.info("   (Updates every minute, solving typically takes 2-10 minutes)")
         
         while time.time() - start_time < self.timeout:
@@ -127,12 +127,12 @@ INSTRUCTIONS:
                 container_status = status.get("status", "unknown")
                 
                 if container_status == "completed":
-                    logger.info("🎉 SUCCESS! CAPTCHA has been solved!")
-                    logger.info(f"✅ Total time: {int(time.time() - start_time)} seconds")
+                    logger.info("SUCCESS! CAPTCHA has been solved!")
+                    logger.info(f"Total time: {int(time.time() - start_time)} seconds")
                     return True
                 
                 if container_status in ["failed", "timeout"]:
-                    logger.info(f"❌ CAPTCHA solving failed: {container_status}")
+                    logger.info(f"CAPTCHA solving failed: {container_status}")
                     return False
                 
                 # Periodic status updates
@@ -141,15 +141,15 @@ INSTRUCTIONS:
                     elapsed = int(current_time - start_time)
                     remaining = int(self.timeout - elapsed)
                     
-                    logger.info(f"⏳ Still solving... ({elapsed//60}:{elapsed%60:02d} elapsed, ~{remaining//60} min remaining)")
+                    logger.info(f"Still solving... ({elapsed//60}:{elapsed%60:02d} elapsed, ~{remaining//60} min remaining)")
                     logger.info(f"   Container Status: {container_status}")
                     logger.info(f"   VNC Interface: {status.get('auto_connect_url', 'N/A')}")
                     
                     # Check if browser is accessible
                     if self._check_vnc_accessibility(status.get('novnc_port')):
-                        logger.info("   🌐 VNC interface is accessible and ready")
+                        logger.info("   VNC interface is accessible and ready")
                     else:
-                        logger.info("   ⏳ VNC interface still initializing...")
+                        logger.info("   VNC interface still initializing...")
                     
                     last_status_time = current_time
                 
@@ -167,7 +167,7 @@ INSTRUCTIONS:
                 continue
         
         # Timeout reached
-        logger.info(f"⏰ TIMEOUT: CAPTCHA solving took longer than {self.timeout//60} minutes")
+        logger.info(f"TIMEOUT: CAPTCHA solving took longer than {self.timeout//60} minutes")
         logger.info(f"Container {container_id[:12]} will be stopped automatically")
         return False
     
@@ -180,13 +180,13 @@ INSTRUCTIONS:
         
         while time.time() - start_time < timeout:
             queue_status = self.automated_handler.queue.get_queue_status()
-            logger.info(f"📋 Queue status: {queue_status['queue_length']} waiting, {queue_status['active_containers']}/{queue_status['max_containers']} active")
+            logger.info(f"Queue status: {queue_status['queue_length']} waiting, {queue_status['active_containers']}/{queue_status['max_containers']} active")
             
             # Check if our job started (would need to implement job tracking)
             # For now, just wait and retry
             time.sleep(30)
         
-        logger.info("⏰ Queue timeout - please try again later")
+        logger.info("Queue timeout - please try again later")
         return False
     
     def _check_vnc_accessibility(self, port: int) -> bool:

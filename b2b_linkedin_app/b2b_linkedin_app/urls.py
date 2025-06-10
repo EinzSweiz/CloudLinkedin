@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('authorization.urls')),
     path('payment/', include(payment_urls)),
+    path('parser_controler/', include('parser_controler.urls')),
     path('login/', auth_views.LoginView.as_view(), name='login'),  # встроенный шаблон
     path("", include(parser_urls)),
     path('vnc-monitor/', views.vnc_monitor, name='vnc_monitor'),

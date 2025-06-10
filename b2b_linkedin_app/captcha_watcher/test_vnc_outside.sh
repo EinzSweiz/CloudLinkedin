@@ -1,18 +1,16 @@
 #!/bin/bash
 
-# Test VNC from outside Docker - RUN THIS ON YOUR HOST MACHINE
-# File: captcha_watcher/test_vnc_outside.sh
 
-echo "🔍 Testing VNC Access from Outside Docker"
+echo "Testing VNC Access from Outside Docker"
 echo "=========================================="
 
-DOCKER_IP="localhost"  # Change this if Docker is on different IP
+DOCKER_IP="localhost"
 VNC_PORT="5900"
 WEB_PORT="6080"
 
 echo "1. Testing Docker container ports..."
 echo "Checking if ports are exposed:"
-docker ps | grep -E "(5900|6080)" || echo "❌ Ports not visible in docker ps"
+docker ps | grep -E "(5900|6080)" || echo "Ports not visible in docker ps"
 
 echo -e "\n2. Testing network connectivity..."
 if command -v nc >/dev/null 2>&1; then
@@ -28,10 +26,10 @@ if command -v curl >/dev/null 2>&1; then
     HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$DOCKER_IP:$WEB_PORT/ 2>/dev/null)
     echo "HTTP status: $HTTP_STATUS"
     if [ "$HTTP_STATUS" = "200" ]; then
-        echo "✅ WebSocket server is responding"
+        echo "WebSocket server is responding"
         echo "Try: http://$DOCKER_IP:$WEB_PORT/vnc.html"
     else
-        echo "❌ WebSocket server not responding properly"
+        echo "WebSocket server not responding properly"
     fi
 else
     echo "curl not available for HTTP testing"
@@ -44,10 +42,10 @@ if command -v vncviewer >/dev/null 2>&1; then
     VNC_PID=$!
     sleep 3
     if ps -p $VNC_PID >/dev/null 2>&1; then
-        echo "✅ VNC viewer connected successfully"
+        echo "VNC viewer connected successfully"
         kill $VNC_PID 2>/dev/null
     else
-        echo "❌ VNC viewer failed to connect"
+        echo "VNC viewer failed to connect"
     fi
 else
     echo "vncviewer not available"
@@ -66,7 +64,7 @@ else
     echo "No containers found"
 fi
 
-echo -e "\n🎯 TROUBLESHOOTING GUIDE:"
+echo -e "\n TROUBLESHOOTING GUIDE:"
 echo "If VNC connects but shows black screen:"
 echo "  - Run inside container: docker exec -it CONTAINER_NAME /app/captcha_watcher/debug_display.sh"
 echo "  - Run inside container: docker exec -it CONTAINER_NAME /app/captcha_watcher/fix_display.sh"

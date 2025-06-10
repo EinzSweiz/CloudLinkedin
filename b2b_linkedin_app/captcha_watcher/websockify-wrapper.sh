@@ -146,7 +146,7 @@ wait_for_vnc() {
 
 # Start websockify with enhanced monitoring
 start_websockify() {
-    log "🚀 Starting websockify on port $WEBSOCKIFY_PORT..."
+    log "Starting websockify on port $WEBSOCKIFY_PORT..."
     
     # Ensure we have a clean start
     cleanup
@@ -228,7 +228,7 @@ monitor_websockify() {
         
         # Exit if too many failures
         if [ $failure_count -ge $max_failures ]; then
-            log "💀 Too many failures, exiting monitor"
+            log "Too many failures, exiting monitor"
             break
         fi
         

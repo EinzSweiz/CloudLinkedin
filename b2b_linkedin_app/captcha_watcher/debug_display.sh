@@ -1,9 +1,6 @@
 #!/bin/bash
 
-# Simple display diagnostic script - ADD TO YOUR EXISTING PROJECT
-# File: captcha_watcher/debug_display.sh
-
-echo "🔍 VNC Display Debug - Checking what's blocking visual content"
+echo "VNC Display Debug - Checking what's blocking visual content"
 echo "=============================================================="
 
 # Set environment
@@ -18,10 +15,10 @@ echo "- fluxbox: $(pgrep -f 'fluxbox' >/dev/null && echo 'RUNNING' || echo 'NOT 
 echo -e "\n2. X11 Display Test:"
 if command -v xdpyinfo >/dev/null 2>&1; then
     if DISPLAY=:0 xdpyinfo >/dev/null 2>&1; then
-        echo "✅ X11 display :0 is accessible"
+        echo "X11 display :0 is accessible"
         echo "Screen info: $(DISPLAY=:0 xdpyinfo | grep 'dimensions:' | awk '{print $2}')"
     else
-        echo "❌ X11 display :0 NOT accessible - THIS IS THE PROBLEM!"
+        echo "X11 display :0 NOT accessible - THIS IS THE PROBLEM!"
         echo "Fix: supervisorctl restart Xvfb"
     fi
 else
@@ -34,12 +31,12 @@ if command -v xlsclients >/dev/null 2>&1; then
     clients=$(DISPLAY=:0 xlsclients 2>/dev/null | wc -l)
     echo "Active X11 clients: $clients"
     if [ $clients -eq 0 ]; then
-        echo "❌ NO APPLICATIONS RUNNING - This is why VNC shows black screen!"
+        echo "NO APPLICATIONS RUNNING - This is why VNC shows black screen!"
         echo "Creating test window..."
         DISPLAY=:0 xterm -geometry 80x24+100+100 -title "VNC TEST - $(date)" &
-        echo "✅ Test window created - check VNC now"
+        echo "Test window created - check VNC now"
     else
-        echo "✅ Applications are running:"
+        echo "Applications are running:"
         DISPLAY=:0 xlsclients 2>/dev/null
     fi
 else
@@ -49,10 +46,10 @@ fi
 
 echo -e "\n4. X11 Authentication Check:"
 if [ -f "/tmp/.Xauthority" ]; then
-    echo "✅ Xauthority file exists"
+    echo "Xauthority file exists"
     ls -la /tmp/.Xauthority
 else
-    echo "❌ Xauthority missing - creating..."
+    echo "Xauthority missing - creating..."
     touch /tmp/.Xauthority
     chmod 600 /tmp/.Xauthority
 fi
@@ -69,15 +66,15 @@ if pgrep -f "x11vnc.*5900" >/dev/null; then
         echo "No VNC log found"
     fi
 else
-    echo "❌ x11vnc not running!"
+    echo "x11vnc not running!"
 fi
 
 echo -e "\n6. Quick Fix Test:"
 echo "Testing if we can create a visible window..."
 DISPLAY=:0 xterm -geometry 80x24+200+200 -title "Debug Test $(date)" -e "echo 'If you see this in VNC, display is working!'; echo 'Window will stay open for 60 seconds'; sleep 60" &
 TEST_PID=$!
-echo "✅ Test window PID: $TEST_PID"
-echo "🎯 Check your VNC client NOW - you should see a terminal window"
+echo "Test window PID: $TEST_PID"
+echo "Check your VNC client NOW - you should see a terminal window"
 echo "   If you see it, the problem is that no applications are running by default"
 
 echo -e "\n7. Port Check:"

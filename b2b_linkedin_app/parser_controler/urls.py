@@ -15,10 +15,14 @@ from .views import (
     stream_captcha_logs,
     captcha_dashboard_data,
     captcha_webhook,
+    dashboard_view,
+    api_parsing_status,
+    api_active_containers,
     
     # Health and utilities
     health_check
 )
+
 
 urlpatterns = [
     # Main interfaces
@@ -30,7 +34,6 @@ urlpatterns = [
     path("api/captcha/sessions/", active_captcha_sessions, name="active_sessions"),
     path("api/captcha/stop/<str:container_id>/", stop_captcha_container, name="stop_captcha"),
     path("api/captcha/cleanup/", cleanup_dead_containers, name="cleanup_containers"),
-    
     # Real-time monitoring
     path("api/captcha/logs/<str:container_id>/", stream_captcha_logs, name="stream_logs"),
     path("api/captcha/dashboard/", captcha_dashboard_data, name="dashboard_data"),
@@ -40,6 +43,9 @@ urlpatterns = [
     
     # Health check
     path("health/", health_check, name="health_check"),
+    path('dashboard/<int:request_id>/', dashboard_view, name='parsing-dashboard'),
+    path('api/parsing-status/<int:request_id>/', api_parsing_status, name='api-parsing-status'),
+    path('api/active-containers/', api_active_containers, name='api-active-containers'),
     
     # Legacy compatibility (deprecated but maintained)
     path("start-captcha-container/", start_automated_captcha_solver, name="legacy_start_captcha"),

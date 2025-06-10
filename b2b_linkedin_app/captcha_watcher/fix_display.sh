@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Simple display fix script - ADD TO YOUR EXISTING PROJECT
-# File: captcha_watcher/fix_display.sh
-
 echo "🔧 VNC Display Fix - Solving visual content issues"
 echo "=================================================="
 
@@ -65,7 +62,7 @@ echo "Step 8: Restarting WebSocket..."
 supervisorctl start novnc
 sleep 3
 
-echo "✅ Fix complete! Check these:"
+echo "Fix complete! Check these:"
 echo "1. VNC client: vncviewer localhost:5900"
 echo "2. Web VNC: http://localhost:6080/vnc.html" 
 echo "3. You should see test windows and a desktop"

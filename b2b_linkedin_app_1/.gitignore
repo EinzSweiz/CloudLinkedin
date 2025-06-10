@@ -1,0 +1,94 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/        # если используешь collectstatic
+
+# If using Django's local settings
+local_settings.py
+
+# dotenv environment variables
+.env
+.env.*
+
+# PyCharm
+.idea/
+*.iml
+
+# VSCode (если кто-то еще может использовать)
+.vscode/
+
+# Virtualenv
+venv/
+ENV/
+env/
+.venv/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Migrations (опционально, если не хочешь коммитить начальные миграции)
+# **/migrations/
+# !**/migrations/__init__.py
+
+# Coverage reports
+htmlcov/
+.coverage
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# pytest
+.cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pytest
+.pytest_cache/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Logs
+*.log
+
+# Compiled files
+*.mo
+*.swp
+
+# Backup files
+*~
+
+# Ignore browser profiles
+b2b_linkedin/b2b_linkedin_app/profiles/
+
+# Ignore parser logs (screenshots, raw HTML)
+b2b_linkedin/b2b_linkedin_app/parser/logs/*.png
+b2b_linkedin/b2b_linkedin_app/parser/logs/*.html
+
+# Ignore shared runtime files
+b2b_linkedin/b2b_linkedin_app/shared_volume/

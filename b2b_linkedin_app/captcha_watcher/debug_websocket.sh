@@ -33,7 +33,7 @@ else
 fi
 
 echo -e "\n6. Check if websockify can reach VNC server..."
-timeout 5 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/5900' && echo "✅ VNC server reachable" || echo "❌ VNC server NOT reachable"
+timeout 5 bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/5900' && echo "VNC server reachable" || echo "VNC server NOT reachable"
 
 echo -e "\n7. Check websockify process arguments..."
 ps aux | grep websockify | grep -v grep | while read line; do
@@ -63,7 +63,7 @@ echo -e "\n10. Test WebSocket with curl..."
 echo "Testing WebSocket handshake:"
 (echo -e "GET /websockify HTTP/1.1\r\nHost: localhost:6080\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nSec-WebSocket-Version: 13\r\n\r\n"; sleep 1) | nc localhost 6080
 
-echo -e "\n🎯 ANALYSIS COMPLETE"
+echo -e "\n ANALYSIS COMPLETE"
 echo "================================"
 echo "If you see 'Connection refused' or empty responses above,"
 echo "the issue is websockify not properly starting or binding to port 6080."

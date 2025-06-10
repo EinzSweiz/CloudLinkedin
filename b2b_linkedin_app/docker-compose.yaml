@@ -10,8 +10,10 @@ services:
       - .env
     volumes:
       - .:/app
+      - shared_data:/app/shared_volume
       - logs:/app/logs
       - /var/run/docker.sock:/var/run/docker.sock
+      - captcha_ready_flags:/captcha_ready_flags
     ports:
       - "8001:8001"
     depends_on:
@@ -23,9 +25,9 @@ services:
       - captcha_watcher
     command: >
       sh -c "
-      python manage.py makemigrations &&
-      python manage.py migrate &&
-      python manage.py runserver 0.0.0.0:8001
+        python manage.py makemigrations &&
+        python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8001
       "
     working_dir: /app
     dns:
@@ -45,10 +47,11 @@ services:
       - "6080:6080"  # noVNC web port
     image: captcha_watcher_image:latest
     volumes:
-      - ./shared_volume:/app/shared_volume
+      - shared_data:/app/shared_volume
       - ./cookies:/app/cookies
-      - .:/app
       - /var/run/docker.sock:/var/run/docker.sock
+      - captcha_ready_flags:/captcha_ready_flags
+      - logs:/app/logs
     environment:
       - DISPLAY=:0
       - PYTHONPATH=/app
@@ -57,8 +60,8 @@ services:
     env_file:
       - .env
     dns:
-    - 8.8.8.8
-    - 1.1.1.1
+      - 8.8.8.8
+      - 1.1.1.1
     restart: always
     networks:
       - app-network
@@ -73,8 +76,10 @@ services:
     container_name: b2b_linkedin_app_celery
     command: celery -A b2b_linkedin_app worker --loglevel=info
     volumes:
+      - shared_data:/app/shared_volume
       - .:/app
       - /var/run/docker.sock:/var/run/docker.sock
+      - captcha_ready_flags:/captcha_ready_flags
     env_file:
       - .env
     depends_on:
@@ -159,7 +164,8 @@ volumes:
   logs:
   redisdata:
   postgres_data:
-
+  captcha_ready_flags:
+  shared_data:
 
 networks:
   app-network:

@@ -3,7 +3,7 @@
 # VNC Data Flow Test Script
 # This script tests if data is actually flowing from X11 -> VNC -> WebSocket
 
-echo "🌊 VNC Data Flow Test"
+echo "VNC Data Flow Test"
 echo "===================="
 
 export DISPLAY=:0
@@ -64,7 +64,7 @@ test_data_flow() {
         echo -e "\nChecking for client connections:"
         grep -i "client\|connect" /tmp/x11vnc_test.log | tail -3
     else
-        echo "❌ VNC log file not created"
+        echo "VNC log file not created"
     fi
     
     # 5. Test direct VNC connection
@@ -133,20 +133,20 @@ test_data_flow() {
     kill $WEBSOCKIFY_PID 2>/dev/null || true
     pkill -f x11vnc 2>/dev/null || true
     
-    echo -e "\n🎯 TEST RESULTS:"
+    echo -e "\nTEST RESULTS:"
     echo "==============="
     
     if grep -q "update" /tmp/x11vnc_test.log 2>/dev/null; then
-        echo "✅ X11VNC is capturing screen updates"
+        echo "X11VNC is capturing screen updates"
     else
-        echo "❌ X11VNC is NOT capturing screen updates"
+        echo "X11VNC is NOT capturing screen updates"
         echo "   This means the issue is between X11 and VNC"
     fi
     
     if grep -q "websocket" /tmp/websockify_test.log 2>/dev/null; then
-        echo "✅ WebSocket connections are being established"
+        echo "WebSocket connections are being established"
     else
-        echo "❌ WebSocket connections are failing"
+        echo "WebSocket connections are failing"
         echo "   This means the issue is in websockify"
     fi
     
@@ -202,7 +202,7 @@ apply_immediate_fix() {
     
     sleep 3
     
-    echo "✅ Services restarted with optimized settings"
+    echo "Services restarted with optimized settings"
     echo "Test your connection now: http://localhost:6080/vnc.html"
 }
 
@@ -215,7 +215,7 @@ case "${1:-test}" in
         apply_immediate_fix
         ;;
     "restart")
-        echo "🔄 Restarting all VNC services..."
+        echo "Restarting all VNC services..."
         supervisorctl restart Xvfb fluxbox x11vnc novnc
         ;;
     *)

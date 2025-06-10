@@ -5,6 +5,7 @@ from parser_controler.utils import save_parsing_info
 from parser.engine.linkedin.search_profiles import search_linkedin_profiles
 from parser_controler.models import ParserRequest
 from redis.lock import Lock
+import time
 from redis.client import Redis
 import redis
 import logging

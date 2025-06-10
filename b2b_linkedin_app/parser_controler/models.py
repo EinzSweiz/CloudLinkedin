@@ -6,7 +6,7 @@ class ParsingInfo(models.Model):
     position = models.CharField("Position", max_length=255)
     company_name = models.CharField("Company Name", max_length=255)
     email = models.EmailField("Email", max_length=255, blank=True, null=True)
-    profile_url = models.URLField("Profile URL", max_length=500, blank=True, null=True)  # Добавленное поле
+    profile_url = models.URLField("Profile URL", max_length=500, blank=True, null=True)
 
     class Meta:
         verbose_name = "Parsing Info"
