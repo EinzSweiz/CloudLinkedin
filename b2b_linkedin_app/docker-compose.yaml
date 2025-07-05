@@ -27,7 +27,8 @@ services:
       sh -c "
         python manage.py makemigrations &&
         python manage.py migrate &&
-        python manage.py runserver 0.0.0.0:8001
+        python manage.py collectstatic --noinput &&
+        daphne -b 0.0.0.0 -p 8001 b2b_linkedin_app.asgi:application
       "
     working_dir: /app
     dns:
@@ -38,37 +39,41 @@ services:
     restart: always
 
   captcha_watcher:
-    build:
-      context: .
-      dockerfile: captcha_watcher/Dockerfile
-    container_name: captcha_watcher
-    ports:
-      - "5900:5900"  # VNC port
-      - "6080:6080"  # noVNC web port
-    image: captcha_watcher_image:latest
-    volumes:
-      - shared_data:/app/shared_volume
-      - ./cookies:/app/cookies
-      - /var/run/docker.sock:/var/run/docker.sock
-      - captcha_ready_flags:/captcha_ready_flags
-      - logs:/app/logs
-    environment:
-      - DISPLAY=:0
-      - PYTHONPATH=/app
-      - DEBIAN_FRONTEND=noninteractive
-      - LOG_LEVEL=DEBUG
-    env_file:
-      - .env
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
-    restart: always
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
+      build:
+        context: .
+        dockerfile: captcha_watcher/Dockerfile
+      container_name: captcha_watcher
+      ports:
+        - "5900:5900" # VNC port
+        - "6080:6080" # noVNC web port
+      image: captcha_watcher_image:latest
+      volumes:
+        - shared_data:/app/shared_volume
+        - ./cookies:/app/cookies
+        - /var/run/docker.sock:/var/run/docker.sock
+        - captcha_ready_flags:/captcha_ready_flags
+        - logs:/app/logs
+      environment:
+        - DISPLAY=:0
+        - PYTHONPATH=/app
+        - DEBIAN_FRONTEND=noninteractive
+        - LOG_LEVEL=DEBUG
+      env_file:
+        - .env
+      dns:
+        - 8.8.8.8
+        - 1.1.1.1
+      restart: always
+      networks:
+        - app-network
+      deploy:
+        resources:
+          limits:
+            cpus: '0.5'
+      # Добавьте эту команду для дополнительной безопасности:
+      command: sh -c "
+        sed -i 's/\r$//' /app/websockify-wrapper.sh 2>/dev/null || true &&
+        /app/captcha_watcher/start.sh"
 
   celery:
     build:

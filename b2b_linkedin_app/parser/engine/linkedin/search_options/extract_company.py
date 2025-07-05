@@ -55,11 +55,19 @@ def extract_company_from_search_card(soup: BeautifulSoup) -> str:
 
 def extract_company_from_profile(driver: WebDriver, profile_url: str) -> str:
     """
-    Enhanced company extraction with multiple parsing strategies
+    Enhanced company extraction with multiple parsing strategies and safe return
     """
     if not profile_url:
         logger.warning("[FALLBACK] No profile URL provided — skipping fallback")
         return "Unknown"
+
+    # Store original URL to ensure we can return
+    original_url = None
+    try:
+        original_url = driver.current_url
+        logger.info(f"[FALLBACK] Stored original URL: {original_url}")
+    except Exception as e:
+        logger.warning(f"[FALLBACK] Could not store original URL: {e}")
 
     try:
         logger.info(f"[FALLBACK] Opening profile page: {profile_url}")
@@ -110,20 +118,68 @@ def extract_company_from_profile(driver: WebDriver, profile_url: str) -> str:
         return "Unknown"
 
     finally:
+        # Enhanced safe return to search page
+        safe_return_to_search(driver, original_url)
+
+def safe_return_to_search(driver: WebDriver, original_url: str = None):
+    """
+    Safely return to search results page with multiple fallback strategies
+    """
+    max_attempts = 3
+    attempt = 0
+    
+    while attempt < max_attempts:
         try:
-            logger.info("[FALLBACK] Going back to search results page...")
-            driver.back()
-            time.sleep(2.5)
+            attempt += 1
+            logger.info(f"[SAFE_RETURN] Attempting to return to search page (attempt {attempt}/{max_attempts})")
+            
+            # Strategy 1: Use browser back
+            if attempt == 1:
+                logger.info("[SAFE_RETURN] Using browser back...")
+                driver.back()
+                time.sleep(3)
+            
+            # Strategy 2: Navigate to original URL if available
+            elif attempt == 2 and original_url and "/search/results/" in original_url:
+                logger.info(f"[SAFE_RETURN] Navigating to original URL: {original_url}")
+                driver.get(original_url)
+                time.sleep(3)
+            
+            # Strategy 3: Force refresh current page if it's a search page
+            else:
+                current_url = driver.current_url
+                if "/search/results/" in current_url:
+                    logger.info("[SAFE_RETURN] Refreshing current search page...")
+                    driver.refresh()
+                    time.sleep(3)
+                else:
+                    logger.warning(f"[SAFE_RETURN] Not on search page: {current_url}")
+                    if original_url:
+                        driver.get(original_url)
+                        time.sleep(3)
+                    else:
+                        # Last resort - just continue and hope for the best
+                        logger.error("[SAFE_RETURN] No way to return to search page")
+                        return
 
-            #Confirm we are back on the search page with cards
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-chameleon-result-urn]'))
-            )
-            logger.info("[FALLBACK] Successfully returned to search results page")
+            # Verify we're back on search page
+            try:
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-chameleon-result-urn]'))
+                )
+                logger.info("[SAFE_RETURN] ✅ Successfully returned to search results page")
+                return
+                
+            except Exception as verify_error:
+                logger.warning(f"[SAFE_RETURN] Verification failed on attempt {attempt}: {verify_error}")
+                if attempt == max_attempts:
+                    raise RuntimeError("Failed to return to search page after all attempts")
+                continue
+
         except Exception as e:
-            logger.error(f"[FALLBACK] Failed to return to search results: {e}")
-            raise RuntimeError("Lost LinkedIn search page after fallback — stopping to prevent misalignment")
-
+            logger.error(f"[SAFE_RETURN] Error on attempt {attempt}: {e}")
+            if attempt == max_attempts:
+                raise RuntimeError(f"Lost LinkedIn search page after fallback — stopping to prevent misalignment: {e}")
 
 def extract_from_headline(soup: BeautifulSoup) -> str:
     """

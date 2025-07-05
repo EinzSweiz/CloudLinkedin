@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Solve CAPTCHA</title>
+    <style>
+        iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+        }
+    </style>
+    <script>
+        let vncWindow = null;
+
+        function openVNCWindow() {
+            if (!vncWindow || vncWindow.closed) {
+                vncWindow = window.open("http://localhost:6080/vnc.html", "_blank");
+            }
+        }
+
+        // Открыть сразу при загрузке страницы
+        window.onload = function () {
+            openVNCWindow();
+
+            // Дополнительно — опрашиваем каждые 10 секунд, если окно закрыто
+            setInterval(() => {
+                openVNCWindow();
+            }, 10000);
+        };
+    </script>
+</head>
+<body>
+    <h2>🧠 CAPTCHA Resolution in Progress</h2>
+    <p>🔐 Please solve the CAPTCHA in the new window (VNC):</p>
+    <iframe src="http://localhost:6080/vnc.html"></iframe>
+</body>
+</html>

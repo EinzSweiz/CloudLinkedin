@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.db.models.signals import post_migrate
 
 
 class ParserControlerConfig(AppConfig):
@@ -7,4 +8,5 @@ class ParserControlerConfig(AppConfig):
 
     # def ready(self):
     #     from . import scheduler
-    #     scheduler.setup_periodic_tasks()
+    #
+    #     post_migrate.connect(scheduler.setup_periodic_tasks, sender=self)

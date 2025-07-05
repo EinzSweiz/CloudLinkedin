@@ -1,6 +1,8 @@
 # b2b_linkedin_app/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Model
+
 from .managers import CustomUserManager
 
 from django.contrib.auth.models import AbstractUser
@@ -20,3 +22,10 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+class OneTimeSub(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.date}"

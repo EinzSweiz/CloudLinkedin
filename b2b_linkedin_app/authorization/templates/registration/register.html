@@ -1,45 +1,52 @@
-{% extends "admin/login.html" %}
-{% load static %}
-
-{% block extrahead %}
-  {{ block.super }}
-  <link rel="stylesheet" href="{% static 'css/register.css' %}">
-{% endblock %}
-
-{% block content %}
-<div id="content" class="login-form-container">
-
-    <form method="post" id="register-form" novalidate>
-        {% csrf_token %}
-
-        {% for field in form %}
-          <div class="form-row">
-              {{ field.label_tag }}
-              {{ field }}
-              {% if field.errors %}
-                <ul class="errorlist">
-                    {% for error in field.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-              {% endif %}
-          </div>
-        {% endfor %}
-
-        {% if form.non_field_errors %}
-            <div class="errornote">
-                {{ form.non_field_errors }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Beautiful Registration</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+    <div class="registration-container">
+        <div class="registration-form">
+            <h1>Create Account</h1>
+            <p>Join us today and unlock amazing features</p>
+            
+            <form method="post" id="register-form" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="form-errors">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                {% for field in form %}
+                    <div class="form-group">
+                        {{ field.label_tag }}
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="error-messages">
+                                {% for error in field.errors %}
+                                    <div class="error">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                
+                <button type="submit" class="submit-btn">Create Account</button>
+            </form>
+            
+            <div class="login-link">
+                <a href="{% url 'admin:login' %}">Already have an account? Sign In</a>
             </div>
-        {% endif %}
-
-        <div class="submit-row">
-            <button type="submit" class="default">Sign Up</button>
         </div>
-    </form>
-
-    <div class="return-link">
-        <a href="{% url 'admin:login' %}" class="a">Already have an account? Sign In</a>
     </div>
-
-</div>
-{% endblock %}
+</body>
+</html>

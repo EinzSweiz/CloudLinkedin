@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>VNC Captcha Resolution Center</title>
+    <style>
+        /* Floating VNC Button - Always visible in bottom right */
+        .vnc-float-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .vnc-float-btn:hover {
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 15px 35px rgba(99, 102, 241, 0.6);
+            background: linear-gradient(135deg, #7c3aed, #6366f1);
+        }
+
+        .vnc-float-btn:active {
+            transform: translateY(-1px) scale(1.05);
+        }
+
+        /* Pulsing animation for live sessions */
+        .vnc-float-btn.live-session {
+            animation: pulse 2s infinite;
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 8px 25px rgba(16, 185, 129, 0.8), 0 0 0 10px rgba(16, 185, 129, 0.2); }
+            100% { box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4); }
+        }
+
+        /* Tooltip for floating button */
+        .vnc-float-btn::after {
+            content: 'VNC Captcha Center';
+            position: absolute;
+            right: 70px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .vnc-float-btn.live-session::after {
+            content: '🚀 LIVE CAPTCHA SESSION';
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .vnc-float-btn:hover::after {
+            opacity: 1;
+        }
+
+        /* Modal overlay */
+        .vnc-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(12px);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .vnc-modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Modal container - Beautiful dark theme */
+        .vnc-modal {
+            background: linear-gradient(145deg, #1e1b2e, #252140);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 650px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 
+                0 25px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            transform: scale(0.9);
+            animation: modalIn 0.3s ease forwards;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Close button */
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+        }
+
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            transform: scale(1.1);
+        }
+
+        /* Header */
+        .modal-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.05));
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-title .title-icon {
+            background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.3));
+        }
+
+        .modal-subtitle {
+            font-size: 1rem;
+            color: #cbd5e1;
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.1));
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1));
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Quick guide */
+        .quick-guide {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .quick-guide h4 {
+            color: #fbbf24;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .quick-guide ol {
+            margin: 0;
+            padding-left: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .quick-guide li {
+            margin-bottom: 0.5rem;
+            color: #cbd5e1;
+        }
+
+        .quick-guide strong {
+            color: #f1f5f9;
+        }
+
+        /* VNC Server Buttons */
+        .vnc-servers {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .server-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.5rem;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            min-height: 140px;
+            backdrop-filter: blur(10px);
+        }
+
+        .server-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            text-decoration: none;
+            color: #f1f5f9;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .server-btn.auto-connect {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .server-btn.auto-connect:hover {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.2));
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+            color: #f1f5f9;
+        }
+
+        .server-btn.manual {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.1));
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .server-btn.manual:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.2));
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
+            color: #f1f5f9;
+        }
+
+        .server-btn.directory {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(124, 58, 237, 0.1));
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .server-btn.directory:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(124, 58, 237, 0.2));
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.2);
+            color: #f1f5f9;
+        }
+
+        .server-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.1));
+        }
+
+        .server-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .server-desc {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Recommended badge */
+        .recommended-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 12px;
+            transform: rotate(15deg);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Three column layout for servers */
+        .vnc-servers.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.25rem;
+        }
+
+        .vnc-servers.three-col .server-btn {
+            padding: 1.5rem 1rem;
+            min-height: 120px;
+        }
+
+        .vnc-servers.three-col .server-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .vnc-servers.three-col .server-title {
+            font-size: 1rem;
+        }
+
+        .vnc-servers.three-col .server-desc {
+            font-size: 0.8rem;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: currentColor;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Live session notification */
+        .live-session-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+            z-index: 10001;
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .live-session-notification.show {
+            display: flex;
+        }
+
+        .live-session-notification button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 1rem;
+            transition: all 0.3s;
+        }
+
+        .live-session-notification button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .vnc-modal {
+                margin: 15px;
+                padding: 2rem;
+                max-width: none;
+                background: linear-gradient(145deg, #1a1625, #211c35);
+            }
+
+            .vnc-servers,
+            .vnc-servers.three-col {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .server-btn {
+                min-height: 100px;
+                padding: 1.5rem 1rem;
+            }
+
+            .server-icon {
+                font-size: 2rem;
+            }
+
+            .vnc-float-btn {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .vnc-float-btn::after {
+                display: none;
+            }
+
+            .modal-title {
+                font-size: 1.5rem;
+            }
+
+            .live-session-notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .quick-guide {
+                padding: 1rem;
+            }
+
+            .modal-header {
+                margin-bottom: 1.5rem;
+            }
+
+            .status-indicator {
+                margin-bottom: 1.5rem;
+            }
+        }
+
+        /* Scrollbar styling for dark theme */
+        .vnc-modal::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .vnc-modal::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .vnc-modal::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .vnc-modal::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Live Session Notification -->
+    <div class="live-session-notification" id="liveSessionNotification">
+        <span>🚀 CAPTCHA session is ready!</span>
+        <button onclick="openLiveSession()">Open VNC</button>
+        <button onclick="hideLiveNotification()" style="background: rgba(0,0,0,0.2);">×</button>
+    </div>
+
+    <!-- Floating VNC Button -->
+    <button class="vnc-float-btn" id="vncFloatBtn" onclick="openVNCModal(event)" title="Open VNC Captcha Center">
+        🔐
+    </button>
+
+    <!-- Modal overlay -->
+    <div class="vnc-modal-overlay" id="vncModalOverlay" onclick="closeModalOutside(event)">
+        <div class="vnc-modal" onclick="event.stopPropagation()">
+            <!-- Close button -->
+            <button class="close-btn" onclick="closeVNCModal(event)">
+                ✕
+            </button>
+
+            <!-- Header -->
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <span class="title-icon">🔐</span>
+                    VNC Captcha Resolution Center
+                </h2>
+                <p class="modal-subtitle">Solve LinkedIn captchas using remote desktop access</p>
+            </div>
+
+            <!-- Status -->
+            <div id="statusIndicator" class="status-indicator status-success">
+                <span>✅</span>
+                <span>VNC server is running and accessible</span>
+            </div>
+
+            <!-- Quick Guide -->
+            <div class="quick-guide">
+                <h4>
+                    <span>📋</span>
+                    Quick Start:
+                </h4>
+                <ol>
+                    <li>Click <strong>"Auto-Connect VNC"</strong> below for the easiest access</li>
+                    <li>Wait for the desktop to load (10-15 seconds)</li>
+                    <li>You'll see Chrome browser with LinkedIn login</li>
+                    <li>Solve any captcha or security challenge</li>
+                    <li>Complete login until you reach LinkedIn feed</li>
+                    <li>System will automatically detect success</li>
+                </ol>
+            </div>
+
+            <!-- VNC Server Buttons -->
+            <div class="vnc-servers three-col" id="vncServersContainer">
+                {% if found and novnc_port %}
+                    <!-- Auto-Connect Button (Active) -->
+                    <a href="http://localhost:{{ novnc_port }}/auto_connect.html" target="_blank" class="server-btn auto-connect" onclick="trackVNCAccess('auto-connect')">
+                        <div class="recommended-badge">LIVE</div>
+                        <div class="server-icon">🚀</div>
+                        <div class="server-title">Auto-Connect VNC</div>
+                        <div class="server-desc">Live browser session</div>
+                    </a>
+                    
+                    <!-- Manual VNC Button -->
+                    <a href="http://localhost:6080/vnc.html" target="_blank" class="server-btn manual" onclick="trackVNCAccess('manual')">
+                        <div class="server-icon">✈️</div>
+                        <div class="server-title">Manual VNC</div>
+                        <div class="server-desc">Manual connection with controls</div>
+                    </a>
+
+                    <!-- VNC Directory Button -->
+                    <a href="http://localhost:6080/" target="_blank" class="server-btn directory" onclick="trackVNCAccess('directory')">
+                        <div class="server-icon">📁</div>
+                        <div class="server-title">VNC Directory</div>
+                        <div class="server-desc">All available VNC options</div>
+                    </a>
+                    
+                {% elif found %}
+                    <!-- Loading State -->
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                        <p style="color: orange; font-size: 1.2rem;">
+                            <span class="spinner" style="display: inline-block; margin-right: 0.5rem;"></span>
+                            ⏳ VNC session is launching... Please wait
+                        </p>
+                    </div>
+                    
+                {% else %}
+                    <!-- Not Found State -->
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                        <p style="color: #f87171; font-size: 1.2rem;">
+                            ⚠️ VNC session not found or not ready now
+                        </p>
+                        <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem;">
+                            Start a parsing task to activate VNC session
+                        </p>
+                        
+                        <!-- Fallback buttons when no active session -->
+                        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+                            <a href="http://localhost:6080/vnc.html" target="_blank" style="
+                                background: rgba(59, 130, 246, 0.2);
+                                border: 1px solid rgba(59, 130, 246, 0.3);
+                                color: #60a5fa;
+                                padding: 0.5rem 1rem;
+                                border-radius: 8px;
+                                text-decoration: none;
+                                font-size: 0.9rem;
+                            ">
+                                Manual VNC
+                            </a>
+                            <a href="http://localhost:6080/" target="_blank" style="
+                                background: rgba(139, 92, 246, 0.2);
+                                border: 1px solid rgba(139, 92, 246, 0.3);
+                                color: #a78bfa;
+                                padding: 0.5rem 1rem;
+                                border-radius: 8px;
+                                text-decoration: none;
+                                font-size: 0.9rem;
+                            ">
+                                VNC Directory
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Additional Controls -->
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+                <button onclick="refreshVNCStatus()" style="
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 8px;
+                    color: #cbd5e1;
+                    padding: 0.5rem 1rem;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    backdrop-filter: blur(10px);
+                " onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
+                    🔄 Refresh Status
+                </button>
+                
+                <button onclick="checkVNCPorts()" style="
+                    background: rgba(255, 255, 255, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    border-radius: 8px;
+                    color: #cbd5e1;
+                    padding: 0.5rem 1rem;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    backdrop-filter: blur(10px);
+                " onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'">
+                    🔌 Check Ports
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let pollInterval = null;
+        let currentLiveSession = null;
+        let lastKnownState = 'idle';
+        let allActiveSessions = []; // ✅ Track all active sessions
+
+        // Modal control functions
+        function openVNCModal(event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            const overlay = document.getElementById('vncModalOverlay');
+            overlay.classList.add('show');
+            // Auto-check status when opening
+            setTimeout(checkVNCStatus, 300);
+        }
+
+        function closeVNCModal(event) {
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+            const overlay = document.getElementById('vncModalOverlay');
+            overlay.classList.remove('show');
+        }
+
+        function closeModalOutside(event) {
+            if (event && event.target === event.currentTarget) {
+                closeVNCModal();
+            }
+        }
+
+        // Status management
+        function updateStatus(message, type = 'success', icon = '✅') {
+            const indicator = document.getElementById('statusIndicator');
+            const icons = {
+                success: '✅',
+                warning: '<span class="spinner"></span>',
+                error: '❌'
+            };
+            
+            const finalIcon = type === 'warning' ? icons.warning : (icon || icons[type]);
+            indicator.className = `status-indicator status-${type}`;
+            indicator.innerHTML = `${finalIcon} <span>${message}</span>`;
+        }
+
+        // ✅ FIXED: Poll for active sessions - handles multiple containers
+        function pollForActiveSession() {
+            fetch('/admin/parser_controler/parserrequest/api/active-containers/')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Active containers poll:', data);
+                    
+                    if (data.containers && data.containers.length > 0) {
+                        // ✅ Store all active sessions
+                        allActiveSessions = data.containers;
+                        
+                        // Get the newest container for notifications
+                        const newestContainer = data.containers.reduce((newest, container) => {
+                            const newestTime = newest.created_at || 0;
+                            const containerTime = container.created_at || 0;
+                            return containerTime > newestTime ? container : newest;
+                        });
+                        
+                        const newState = 'live-session';
+                        
+                        // Check if this is a new session (based on total count change)
+                        if (lastKnownState !== 'live-session' && newestContainer.novnc_port) {
+                            console.log(`🚀 LIVE SESSIONS DETECTED! Total: ${data.containers.length}`);
+                            
+                            currentLiveSession = {
+                                container_id: newestContainer.container_id,
+                                email: newestContainer.email || 'unknown',
+                                cred_id: newestContainer.cred_id,
+                                novnc_port: newestContainer.novnc_port,
+                                auto_connect_url: newestContainer.auto_connect_url || `http://localhost:${newestContainer.novnc_port}/auto_connect.html`
+                            };
+                            
+                            // Update floating button to live state
+                            updateFloatingButton(true);
+                            
+                            // Show notification for multiple sessions
+                            showMultipleSessionNotification(data.containers);
+                            
+                            // Update modal content with all sessions
+                            updateModalWithMultipleSessions(data.containers);
+                            
+                            // Update status
+                            updateStatus(`🚀 ${data.containers.length} active CAPTCHA session(s)`, 'success');
+                        }
+                        
+                        lastKnownState = newState;
+                        
+                    } else {
+                        // No active sessions
+                        if (lastKnownState === 'live-session') {
+                            console.log('📴 All live sessions ended');
+                            currentLiveSession = null;
+                            allActiveSessions = [];
+                            updateFloatingButton(false);
+                            hideLiveNotification();
+                            updateStatus('No active VNC sessions', 'warning');
+                        }
+                        lastKnownState = 'idle';
+                    }
+                })
+                .catch(error => {
+                    console.log('Poll error:', error);
+                    // Don't update state on error to avoid flickering
+                });
+        }
+
+        // Update floating button appearance
+        function updateFloatingButton(isLive) {
+            const btn = document.getElementById('vncFloatBtn');
+            if (isLive) {
+                btn.classList.add('live-session');
+                btn.innerHTML = '🚀';
+            } else {
+                btn.classList.remove('live-session');
+                btn.innerHTML = '🔐';
+            }
+        }
+
+        // ✅ NEW: Show notification for multiple sessions
+        function showMultipleSessionNotification(containers) {
+            const notification = document.getElementById('liveSessionNotification');
+            
+            if (containers.length === 1) {
+                const container = containers[0];
+                const email = container.email || 'Request ID: ' + (container.cred_id || 'unknown');
+                notification.innerHTML = `
+                    <span>🚀 CAPTCHA session ready! ${email} (Port: ${container.novnc_port})</span>
+                    <button onclick="window.open('${container.auto_connect_url}', '_blank'); hideLiveNotification();">Open VNC</button>
+                    <button onclick="hideLiveNotification()" style="background: rgba(0,0,0,0.2);">×</button>
+                `;
+            } else {
+                // Multiple containers
+                const ports = containers.map(c => c.novnc_port).join(', ');
+                notification.innerHTML = `
+                    <span>🚀 ${containers.length} CAPTCHA sessions active! Ports: ${ports}</span>
+                    <button onclick="openNewestSession()">Open Latest</button>
+                    <button onclick="openVNCModal()">View All</button>
+                    <button onclick="hideLiveNotification()" style="background: rgba(0,0,0,0.2);">×</button>
+                `;
+            }
+            
+            notification.classList.add('show');
+            
+            // Auto-hide after 15 seconds (longer for multiple sessions)
+            setTimeout(() => {
+                hideLiveNotification();
+            }, 15000);
+        }
+
+        // Hide live session notification
+        function hideLiveNotification() {
+            const notification = document.getElementById('liveSessionNotification');
+            notification.classList.remove('show');
+        }
+
+        // Open newest session
+        function openNewestSession() {
+            if (currentLiveSession) {
+                window.open(currentLiveSession.auto_connect_url, '_blank');
+                hideLiveNotification();
+                updateStatus('Opening latest VNC session...', 'success');
+            }
+        }
+
+        // Legacy function - opens current live session
+        function openLiveSession() {
+            openNewestSession();
+        }
+
+        // ✅ NEW: Update modal with multiple sessions
+        function updateModalWithMultipleSessions(containers) {
+            const container = document.getElementById('vncServersContainer');
+            
+            if (containers.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                        <p style="color: #f87171; font-size: 1.2rem;">⚠️ No active VNC sessions</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let buttonsHtml = '';
+            
+            // Sort containers by creation time (newest first)
+            const sortedContainers = containers.sort((a, b) => (b.created_at || 0) - (a.created_at || 0));
+            
+            sortedContainers.forEach((sessionInfo, index) => {
+                const isNewest = index === 0;
+                const badgeText = isNewest ? 'LATEST' : 'ACTIVE';
+                const email = sessionInfo.email || `Request ${sessionInfo.cred_id || 'unknown'}`;
+                const uptime = sessionInfo.created_at ? Math.floor((Date.now() / 1000) - sessionInfo.created_at) : 0;
+                const uptimeStr = uptime > 0 ? `${Math.floor(uptime / 60)}m ${uptime % 60}s` : 'Just started';
+                
+                buttonsHtml += `
+                    <a href="${sessionInfo.auto_connect_url}" target="_blank" class="server-btn auto-connect" onclick="trackVNCAccess('auto-connect', ${sessionInfo.novnc_port})">
+                        <div class="recommended-badge">${badgeText}</div>
+                        <div class="server-icon">🚀</div>
+                        <div class="server-title">Port ${sessionInfo.novnc_port}</div>
+                        <div class="server-desc">${email}<br>Uptime: ${uptimeStr}</div>
+                    </a>
+                `;
+            });
+            
+            // Add manual VNC option for newest session
+            if (sortedContainers.length > 0) {
+                const newest = sortedContainers[0];
+                buttonsHtml += `
+                    <a href="http://localhost:${newest.novnc_port}/vnc.html" target="_blank" class="server-btn manual" onclick="trackVNCAccess('manual', ${newest.novnc_port})">
+                        <div class="server-icon">✈️</div>
+                        <div class="server-title">Manual VNC</div>
+                        <div class="server-desc">Latest session with controls</div>
+                    </a>
+                `;
+            }
+            
+            container.innerHTML = buttonsHtml;
+        }
+
+        // Legacy function for backward compatibility
+        function updateModalWithLiveSession(sessionInfo) {
+            updateModalWithMultipleSessions([sessionInfo]);
+        }
+
+        // Start/stop polling
+        function startPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+            
+            // Poll every 5 seconds
+            pollInterval = setInterval(pollForActiveSession, 5000);
+            
+            // Initial poll
+            setTimeout(pollForActiveSession, 1000);
+            
+            console.log('🔄 Started polling for active VNC sessions');
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                console.log('⏹️ Stopped polling for VNC sessions');
+            }
+        }
+
+        // Check VNC status using Django API
+        function checkVNCStatus() {
+            updateStatus('Checking VNC server status...', 'warning');
+            
+            // First try to poll for active sessions
+            pollForActiveSession();
+            
+            // Use Django API endpoint to check VNC status
+            fetch('/api/vnc-status/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        updateStatus('VNC server is running and accessible', 'success');
+                        console.log('VNC Status:', data);
+                    } else {
+                        updateStatus(data.message || 'VNC server has issues', 'error');
+                        console.log('VNC Error:', data);
+                    }
+                })
+                .catch(error => {
+                    updateStatus('VNC status check failed, but polling active', 'warning');
+                    console.log('VNC API call failed:', error);
+                    
+                    // Fallback: try to check ports API
+                    checkVNCPorts();
+                });
+        }
+
+        // Additional function to check VNC ports
+        function checkVNCPorts() {
+            fetch('/api/vnc-ports/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.overall_status === 'healthy') {
+                        updateStatus('VNC ports are open', 'success');
+                    } else {
+                        updateStatus('VNC ports have connectivity issues', 'error');
+                    }
+                    console.log('VNC Ports Status:', data);
+                })
+                .catch(error => {
+                    updateStatus('Cannot reach VNC status API', 'error');
+                    console.log('VNC Ports API failed:', error);
+                });
+        }
+
+        // ✅ UPDATED: Track VNC access with port info
+        function trackVNCAccess(type, port = null) {
+            const portInfo = port ? ` (Port: ${port})` : '';
+            updateStatus(`Opening ${type} VNC connection${portInfo}...`, 'success');
+            console.log(`VNC ${type} access${portInfo} at ${new Date().toISOString()}`);
+            
+            // Re-check status after opening VNC
+            setTimeout(checkVNCStatus, 2000);
+        }
+
+        // Manual refresh function for testing
+        function refreshVNCStatus() {
+            updateStatus('Refreshing VNC status...', 'warning');
+            setTimeout(checkVNCStatus, 500);
+            
+            // Also trigger a manual poll
+            pollForActiveSession();
+        }
+
+        // ✅ NEW: Function to get all active sessions info
+        function getAllActiveSessions() {
+            return allActiveSessions;
+        }
+
+        // ✅ NEW: Function to open specific session by port
+        function openSessionByPort(port) {
+            const session = allActiveSessions.find(s => s.novnc_port === port);
+            if (session) {
+                window.open(session.auto_connect_url, '_blank');
+                updateStatus(`Opening VNC session on port ${port}...`, 'success');
+            } else {
+                updateStatus(`Session on port ${port} not found`, 'error');
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Escape to close modal
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeVNCModal();
+                hideLiveNotification();
+            }
+            // Ctrl+Shift+V to open VNC modal
+            if (e.ctrlKey && e.shiftKey && e.key === 'V') {
+                e.preventDefault();
+                openVNCModal();
+            }
+            // Ctrl+Shift+L to open live session
+            if (e.ctrlKey && e.shiftKey && e.key === 'L' && currentLiveSession) {
+                e.preventDefault();
+                openLiveSession();
+            }
+            // Ctrl+Shift+A to open all sessions
+            if (e.ctrlKey && e.shiftKey && e.key === 'A' && allActiveSessions.length > 0) {
+                e.preventDefault();
+                allActiveSessions.forEach(session => {
+                    window.open(session.auto_connect_url, '_blank');
+                });
+                updateStatus(`Opening ${allActiveSessions.length} VNC sessions...`, 'success');
+            }
+        });
+
+        // Page lifecycle management
+        window.addEventListener('load', function() {
+            console.log('🚀 VNC Captcha Center loaded');
+            
+            // Start polling for active sessions
+            startPolling();
+            
+            // Check VNC status in background after a short delay
+            setTimeout(checkVNCStatus, 1500);
+        });
+
+        // Stop polling when page is hidden/unloaded to save resources
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopPolling();
+            } else {
+                startPolling();
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            stopPolling();
+        });
+
+        // Make functions globally available
+        window.openVNCModal = openVNCModal;
+        window.closeVNCModal = closeVNCModal;
+        window.openLiveSession = openLiveSession;
+        window.openNewestSession = openNewestSession;
+        window.hideLiveNotification = hideLiveNotification;
+        window.pollForActiveSession = pollForActiveSession;
+        window.startPolling = startPolling;
+        window.stopPolling = stopPolling;
+        window.getAllActiveSessions = getAllActiveSessions;
+        window.openSessionByPort = openSessionByPort;
+        window.refreshVNCStatus = refreshVNCStatus;
+        window.checkVNCStatus = checkVNCStatus;
+        window.checkVNCPorts = checkVNCPorts;
+        window.trackVNCAccess = trackVNCAccess;
+    </script>
+</body>
+</html>

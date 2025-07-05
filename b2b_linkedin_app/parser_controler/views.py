@@ -1,10 +1,11 @@
 # parser_controler/views.py - Enhanced with full automation
 from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.admin.views.decorators import staff_member_required
 from rest_framework.decorators import api_view
 import json
+from django.utils import timezone
 import time
 from .models import ParsingInfo, ParserRequest
 import redis
@@ -518,62 +519,242 @@ def health_check(request):
 
 @staff_member_required
 def dashboard_view(request, request_id):
-    """Simple dashboard view"""
-    context = {
-        'request_id': request_id,
-        'title': f'Parsing Dashboard - Request {request_id}'
-    }
-    return render(request, 'admin/parsing_dashboard.html', context)
-
+    """Dashboard view"""
+    try:
+        # Get the parsing request to validate it exists
+        parser_request = get_object_or_404(ParserRequest, id=request_id)
+        
+        context = {
+            'request_id': request_id,
+            'title': f'Parsing Dashboard - Request {request_id}',
+            'parser_request': parser_request  # Pass the request object
+        }
+        return render(request, 'admin/parsing_dashboard.html', context)
+    except Exception as e:
+        logger.error(f"Dashboard view error: {e}")
+        return render(request, 'admin/parsing_dashboard.html', {
+            'request_id': request_id,
+            'title': f'Parsing Dashboard - Request {request_id}',
+            'error': str(e)
+        })
+# parser_controler/views.py - FIXED API endpoint for real-time parsing status
 @staff_member_required
 def api_parsing_status(request, request_id):
-    """API endpoint for real-time parsing status"""
+    """ENHANCED REAL-TIME API endpoint for parsing status"""
     try:
-        # Get parsing statistics for this request
-        parser_request = ParserRequest.objects.get(id=request_id)
-        profiles = ParsingInfo.objects.all().order_by('-id')[:50]  # Get recent profiles
+        # Get the specific parsing request
+        parser_request = get_object_or_404(ParserRequest, id=request_id)
+        
+        # Get profiles FOR THIS REQUEST ONLY - ordered by creation time (newest first)
+        profiles = ParsingInfo.objects.filter(
+            parser_request=parser_request
+        ).order_by('-id')  # Newest first for real-time feel
         
         # Calculate statistics
         total_profiles = profiles.count()
         profiles_with_email = profiles.exclude(email__isnull=True).exclude(email__exact='').count()
         success_rate = round((profiles_with_email / total_profiles * 100)) if total_profiles > 0 else 0
         
-        # Get latest profiles for preview
-        latest_profiles = profiles.order_by('-id')[:8]
+        # Get latest profiles for preview (limit to 15 most recent)
+        latest_profiles = profiles[:15]
         
-        return JsonResponse({
+        # Calculate actual progress based on pages
+        current_page = parser_request.current_page or parser_request.start_page
+        total_pages = parser_request.end_page - parser_request.start_page + 1
+        pages_processed = max(0, current_page - parser_request.start_page)
+        
+        # If completed, show all pages as processed
+        if parser_request.status == 'completed':
+            pages_processed = total_pages
+            current_page = parser_request.end_page
+
+        # FIXED: Better keywords parsing with multiple format support
+        def parse_keywords_enhanced(keywords_field):
+            try:
+                if not keywords_field:
+                    return ['No keywords specified']
+                
+                # If it's already a list, return it
+                if isinstance(keywords_field, list):
+                    return [str(k).strip() for k in keywords_field if k]
+                
+                # Convert to string and clean
+                keywords_str = str(keywords_field).strip()
+                
+                # Handle empty string
+                if not keywords_str:
+                    return ['No keywords specified']
+                
+                # Handle JSON array format: ["keyword1", "keyword2"] or ['keyword1', 'keyword2']
+                if (keywords_str.startswith('[') and keywords_str.endswith(']')) or \
+                   (keywords_str.startswith("['") and keywords_str.endswith("']")) or \
+                   (keywords_str.startswith('["') and keywords_str.endswith('"]')):
+                    try:
+                        import json
+                        parsed = json.loads(keywords_str)
+                        if isinstance(parsed, list):
+                            return [str(k).strip().strip('"').strip("'") for k in parsed if k]
+                    except json.JSONDecodeError:
+                        try:
+                            import ast
+                            parsed = ast.literal_eval(keywords_str)
+                            if isinstance(parsed, list):
+                                return [str(k).strip() for k in parsed if k]
+                        except:
+                            pass
+                
+                # Handle comma-separated format: "keyword1, keyword2, keyword3"
+                if ',' in keywords_str:
+                    keywords = [k.strip().strip('"').strip("'") for k in keywords_str.split(',')]
+                    return [k for k in keywords if k]
+                
+                # Handle space-separated format: "keyword1 keyword2 keyword3"
+                if ' ' in keywords_str and not keywords_str.startswith('['):
+                    keywords = [k.strip() for k in keywords_str.split()]
+                    return [k for k in keywords if k]
+                
+                # Single keyword
+                clean_keyword = keywords_str.strip('"').strip("'").strip()
+                return [clean_keyword] if clean_keyword else ['No keywords specified']
+                
+            except Exception as e:
+                logger.warning(f"Failed to parse keywords '{keywords_field}': {e}")
+                return ['Parse error - check format']
+
+        keywords = parse_keywords_enhanced(parser_request.keywords)
+
+        # Enhanced activity feed with more details and better formatting
+        activities = []
+        for profile in latest_profiles[:12]:  # Show more activities for better real-time feel
+            email_status = "✅ Email found" if profile.email else "📧 Email pending"
+            company_info = profile.company_name or 'Unknown Company'
+            position_info = profile.position or 'Unknown Position'
+            
+            activities.append({
+                'icon': '✅' if profile.email else '👤',
+                'message': f"Found: {profile.full_name}",
+                'detail': f"{position_info} @ {company_info}",
+                'email_status': email_status,
+                'timestamp': profile.created_at.strftime('%H:%M:%S') if profile.created_at else '',
+                'has_email': bool(profile.email),
+                'profile_id': profile.id
+            })
+
+        # Calculate processing speed (profiles per minute)
+        processing_speed = 0
+        if parser_request.started_at and total_profiles > 0:
+            elapsed_time = (timezone.now() - parser_request.started_at).total_seconds() / 60  # minutes
+            if elapsed_time > 0:
+                processing_speed = round(total_profiles / elapsed_time, 1)
+
+        # Estimate time remaining
+        estimated_remaining = "Calculating..."
+        if parser_request.status == 'running' and processing_speed > 0:
+            remaining_pages = max(0, parser_request.end_page - current_page)
+            if remaining_pages > 0:
+                # Estimate based on current speed
+                estimated_minutes = remaining_pages * 2  # Rough estimate: 2 minutes per page
+                if estimated_minutes < 60:
+                    estimated_remaining = f"~{estimated_minutes} minutes"
+                else:
+                    estimated_remaining = f"~{estimated_minutes // 60}h {estimated_minutes % 60}m"
+            else:
+                estimated_remaining = "Almost done"
+        elif parser_request.status == 'completed':
+            estimated_remaining = "Completed"
+        elif parser_request.status == 'error':
+            estimated_remaining = "Error occurred"
+
+        # Build comprehensive response
+        response_data = {
             'status': 'success',
+            'request_status': parser_request.status,
             'stats': {
                 'profilesFound': total_profiles,
                 'emailsExtracted': profiles_with_email,
-                'pagesProcessed': min(total_profiles // 10 + 1, 10),
-                'successRate': success_rate
+                'pagesProcessed': pages_processed,
+                'totalPages': total_pages,
+                'currentPage': current_page,
+                'successRate': success_rate,
+                'limit': parser_request.limit,
+                'processingSpeed': processing_speed,  # profiles per minute
+                'estimatedRemaining': estimated_remaining
             },
             'latest_profiles': [
                 {
+                    'id': profile.id,
                     'name': profile.full_name,
-                    'company': profile.company_name,
-                    'email': profile.email,
-                    'position': profile.position
+                    'company': profile.company_name or 'Unknown Company',
+                    'email': profile.email or 'Not found',
+                    'position': profile.position or 'Unknown Position',
+                    'profile_url': profile.profile_url,
+                    'created_at': profile.created_at.strftime('%H:%M:%S') if profile.created_at else '',
+                    'has_email': bool(profile.email),
+                    'email_confidence': 'High' if profile.email and '@' in profile.email else 'Low'
                 }
                 for profile in latest_profiles
             ],
-            'activities': [
-                {
-                    'icon': '👤',
-                    'message': f"Profile extracted: {profile.full_name}",
-                    'detail': f"@ {profile.company_name}",
-                    'timestamp': ''
-                }
-                for profile in latest_profiles[:5]
-            ]
-        })
+            'activities': activities,
+            'request_info': {
+                'id': parser_request.id,
+                'keywords': keywords,  # FIXED: Properly parsed keywords
+                'location': parser_request.location,
+                'status': parser_request.status,
+                'error_message': parser_request.error_message,
+                'created_at': parser_request.created_at.strftime('%Y-%m-%d %H:%M:%S') if parser_request.created_at else '',
+                'started_at': parser_request.started_at.strftime('%H:%M:%S') if parser_request.started_at else '',
+                'start_page': parser_request.start_page,
+                'end_page': parser_request.end_page,
+                'limit': parser_request.limit,
+                'duration_minutes': round(parser_request.duration_seconds / 60, 1) if parser_request.duration_seconds else 0
+            },
+            'progress': {
+                'percentage': round((pages_processed / total_pages) * 100, 1) if total_pages > 0 else 0,
+                'current_page': current_page,
+                'total_pages': total_pages,
+                'pages_remaining': max(0, parser_request.end_page - current_page),
+                'status_message': get_status_message(parser_request.status, current_page, parser_request.end_page)
+            },
+            'system': {
+                'timestamp': time.time(),
+                'server_time': timezone.now().strftime('%H:%M:%S'),
+                'connection_status': 'connected',
+                'auto_refresh': True
+            }
+        }
         
-    except Exception as e:
+        return JsonResponse(response_data)
+        
+    except ParserRequest.DoesNotExist:
         return JsonResponse({
             'status': 'error',
-            'message': str(e)
-        })
+            'message': f'Parser request {request_id} not found',
+            'error_code': 'REQUEST_NOT_FOUND',
+            'timestamp': time.time()
+        }, status=404)
+    except Exception as e:
+        logger.error(f"API parsing status error: {e}")
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e),
+            'error_code': 'INTERNAL_ERROR',
+            'timestamp': time.time()
+        }, status=500)
+
+def get_status_message(status, current_page, end_page):
+    """Get human-readable status message"""
+    if status == 'pending':
+        return 'Waiting to start...'
+    elif status == 'running':
+        return f'Processing page {current_page} of {end_page}...'
+    elif status == 'completed':
+        return 'Parsing completed successfully!'
+    elif status == 'error':
+        return 'An error occurred during parsing'
+    elif status == 'cancelled':
+        return 'Parsing was cancelled'
+    else:
+        return f'Status: {status}'
 
 @staff_member_required
 def api_active_containers(request):
@@ -615,5 +796,73 @@ def api_active_containers(request):
         return JsonResponse({
             "status": "error",
             "message": str(e),
-            "containers": []
+            "containers": [],
+            "timestamp": time.time()
+        })
+
+
+# Add these imports at the top of your views.py
+from django.shortcuts import render
+from django.contrib.admin.views.decorators import staff_member_required
+from django.http import JsonResponse
+
+# Add these views to your parser_controler/views.py
+
+@staff_member_required
+def websocket_test_view(request):
+    """WebSocket test page"""
+    return render(request, 'admin/websocket_test.html', {
+        'title': 'WebSocket Connection Test'
+    })
+
+@staff_member_required  
+def websocket_config_test(request):
+    """Test WebSocket configuration via API"""
+    try:
+        # Test all WebSocket-related imports
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        import parser_controler.routing
+        import parser_controler.consumers
+        import parser_controler.test_consumer
+        
+        channel_layer = get_channel_layer()
+        
+        config_info = {
+            "status": "success",
+            "asgi_configured": True,
+            "channel_layer_type": str(type(channel_layer).__name__),
+            "channel_layer_backend": str(channel_layer),
+            "websocket_patterns": len(parser_controler.routing.websocket_urlpatterns),
+            "patterns": [str(pattern.pattern) for pattern in parser_controler.routing.websocket_urlpatterns],
+            "consumers_available": [
+                "TestWebSocketConsumer",
+                "ParsingConsumer"
+            ]
+        }
+        
+        # Test channel layer functionality
+        try:
+            # This is a simple test - don't worry if it doesn't work in all environments
+            test_channel = "test-channel"
+            async_to_sync(channel_layer.group_add)(test_channel, "test-group")
+            config_info["channel_layer_working"] = True
+        except Exception as e:
+            config_info["channel_layer_working"] = False
+            config_info["channel_layer_error"] = str(e)
+        
+        return JsonResponse(config_info)
+        
+    except ImportError as e:
+        return JsonResponse({
+            "status": "error",
+            "asgi_configured": False,
+            "error": f"Import error: {str(e)}",
+            "missing_component": "channels or routing"
+        })
+    except Exception as e:
+        return JsonResponse({
+            "status": "error", 
+            "asgi_configured": False,
+            "error": str(e)
         })

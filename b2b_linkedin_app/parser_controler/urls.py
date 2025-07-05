@@ -18,6 +18,8 @@ from .views import (
     dashboard_view,
     api_parsing_status,
     api_active_containers,
+    websocket_config_test,
+    websocket_test_view,
     
     # Health and utilities
     health_check
@@ -40,6 +42,9 @@ urlpatterns = [
     
     # Webhooks and notifications
     path("webhook/captcha/", captcha_webhook, name="captcha_webhook"),
+    path('test/websocket/', websocket_test_view, name='websocket_test'),
+    path('test/websocket-config/', websocket_config_test, name='websocket_config_test'),
+
     
     # Health check
     path("health/", health_check, name="health_check"),
@@ -51,9 +56,3 @@ urlpatterns = [
     path("start-captcha-container/", start_automated_captcha_solver, name="legacy_start_captcha"),
     path("active-containers/", active_captcha_sessions, name="legacy_active_containers"),
 ]
-
-# WebSocket URL patterns (if using Django Channels)
-# websocket_urlpatterns = [
-#     path("ws/captcha/status/", CaptchaStatusConsumer.as_asgi()),
-#     path("ws/captcha/logs/<str:container_id>/", CaptchaLogsConsumer.as_asgi()),
-# ]

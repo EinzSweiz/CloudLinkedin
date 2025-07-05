@@ -40,4 +40,4 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . /app
 
 # CMD ["python", "parser/engine/runner.py"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8001"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8001", "b2b_linkedin_app.asgi:application"]

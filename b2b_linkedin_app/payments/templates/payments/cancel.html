@@ -1,3 +1,10 @@
-<h1>❌ Payment Cancelled</h1>
-<p>Your payment was not completed.</p>
-<a href="/admin/">Return to admin panel</a>
+{% extends "admin/login.html" %}
+{% load static %}
+
+{% block content %}
+<div class="form-row" style="text-align: center;">
+    <h1>❌ Payment Cancelled</h1>
+    <p>Your payment was not completed.</p>
+    <p><a class="button" href="/admin/">Return to admin panel</a></p>
+</div>
+{% endblock %}

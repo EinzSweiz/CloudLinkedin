@@ -974,11 +974,15 @@ def resolve_with_gui_manual_fallback(email):
         return False
 
 def watch_loop():
-    """Main watch loop with enhanced status reporting"""
+    """Main watch loop with enhanced status reporting and DEBUG LOGGING"""
     time.sleep(8)
     logger.info("="*70)
     logger.info("🚀 ENHANCED AUTOMATIC CAPTCHA WATCHER STARTED")
     logger.info("="*70)
+    logger.info(f"Container ID: {os.environ.get('HOSTNAME', 'unknown')}")
+    logger.info(f"Email from ENV: {os.environ.get('EMAIL', 'unknown')}")
+    logger.info(f"Watch file path: {WATCH_FILE}")
+    logger.info(f"Processed file path: {PROCESSED_FILE}")
     logger.info("Features:")
     logger.info("✅ Enhanced session transfer with debugging")
     logger.info("✅ Improved error handling and retry logic")
@@ -991,42 +995,155 @@ def watch_loop():
     # Update initial status
     update_container_status("starting", "CAPTCHA watcher initialized and ready")
     
-    ensure_vnc_ready()
+    # VNC readiness check
+    logger.info("🔍 Checking VNC readiness...")
+    vnc_ready = ensure_vnc_ready()
+    logger.info(f"VNC Ready: {vnc_ready}")
+    
+    # DEBUG: Check file system access
+    logger.info("🔍 DEBUG: Checking file system access...")
+    try:
+        shared_volume = "/app/shared_volume"
+        logger.info(f"Shared volume exists: {os.path.exists(shared_volume)}")
+        
+        if os.path.exists(shared_volume):
+            files = os.listdir(shared_volume)
+            logger.info(f"Files in shared volume ({len(files)}): {files}")
+            
+            # Check for session files specifically
+            session_files = [f for f in files if f.startswith("captcha_session_")]
+            if session_files:
+                logger.info(f"🎯 SESSION FILES FOUND: {session_files}")
+                for session_file in session_files:
+                    file_path = os.path.join(shared_volume, session_file)
+                    size = os.path.getsize(file_path)
+                    mtime = os.path.getmtime(file_path)
+                    age = time.time() - mtime
+                    logger.info(f"   📄 {session_file}: {size} bytes, {age:.1f}s old")
+            else:
+                logger.warning("⚠️ NO SESSION FILES FOUND in shared volume")
+        else:
+            logger.error("❌ Shared volume directory does not exist!")
+            
+        # Check queue file specifically
+        logger.info(f"Queue file exists: {os.path.exists(WATCH_FILE)}")
+        if os.path.exists(WATCH_FILE):
+            with open(WATCH_FILE, "r") as f:
+                content = f.read().strip()
+            logger.info(f"Queue file content: '{content}'")
+        else:
+            logger.warning(f"⚠️ Queue file does not exist: {WATCH_FILE}")
+            
+    except Exception as debug_error:
+        logger.error(f"❌ File system debug error: {debug_error}")
 
     processed = set()
+    loop_count = 0
+    
+    logger.info("🔄 Starting main processing loop...")
+    update_container_status("ready", "Main loop started - waiting for CAPTCHA requests")
+    
     while True:
         try:
+            loop_count += 1
+            
+            # Enhanced logging every 10 iterations (100 seconds)
+            if loop_count % 10 == 0:
+                logger.info(f"🔄 Loop iteration #{loop_count} - still monitoring...")
+                logger.info(f"   Processed emails: {len(processed)}")
+                logger.info(f"   Queue file exists: {os.path.exists(WATCH_FILE)}")
+                
+            # Check if queue file exists
+            logger.debug(f"[LOOP {loop_count}] Checking queue file: {WATCH_FILE}")
+            
             if os.path.exists(WATCH_FILE):
-                with open(WATCH_FILE, "r") as f:
-                    lines = [line.strip() for line in f.readlines()]
-                for email in lines:
-                    if email and email not in processed:
-                        logger.info("*" * 70) 
-                        logger.info(f"🎯 NEW ENHANCED CAPTCHA REQUEST: {email}")
-                        logger.info("*" * 70) 
-                        try:
-                            success = resolve_with_gui_automatic(email)
-                            if success:
-                                logger.info("🎉 CAPTCHA RESOLUTION SUCCESSFUL!")
+                logger.info(f"✅ [LOOP {loop_count}] Queue file found! Reading contents...")
+                
+                try:
+                    with open(WATCH_FILE, "r") as f:
+                        lines = [line.strip() for line in f.readlines()]
+                    
+                    logger.info(f"📧 [LOOP {loop_count}] Found {len(lines)} emails in queue: {lines}")
+                    
+                    for email in lines:
+                        if email and email not in processed:
+                            logger.info("*" * 70) 
+                            logger.info(f"🎯 NEW ENHANCED CAPTCHA REQUEST DETECTED: {email}")
+                            logger.info(f"🔍 Processing loop #{loop_count}")
+                            logger.info("*" * 70) 
+                            
+                            # Immediately check for session file
+                            session_file = f"/app/shared_volume/captcha_session_{email}.json"
+                            logger.info(f"🔍 Looking for session file: {session_file}")
+                            logger.info(f"   Exists: {os.path.exists(session_file)}")
+                            
+                            if os.path.exists(session_file):
+                                size = os.path.getsize(session_file)
+                                mtime = os.path.getmtime(session_file)
+                                age = time.time() - mtime
+                                logger.info(f"✅ SESSION FILE FOUND!")
+                                logger.info(f"   📏 Size: {size} bytes")
+                                logger.info(f"   🕐 Age: {age:.1f} seconds")
+                                logger.info(f"   📄 Path: {session_file}")
+                                
+                                # Try to parse it
+                                try:
+                                    with open(session_file, 'r') as f:
+                                        session_data = json.load(f)
+                                    logger.info(f"✅ SESSION PARSED SUCCESSFULLY!")
+                                    logger.info(f"   📧 Email: {session_data.get('email', 'Unknown')}")
+                                    logger.info(f"   🌐 URL: {session_data.get('current_url', 'Unknown')}")
+                                    logger.info(f"   🍪 Cookies: {len(session_data.get('cookies', []))}")
+                                except Exception as parse_error:
+                                    logger.error(f"❌ SESSION PARSE ERROR: {parse_error}")
                             else:
-                                logger.warning("⚠️ CAPTCHA RESOLUTION FAILED")
-                        except Exception as e:
-                            logger.error(f"❌ Error processing CAPTCHA request: {e}")
-                            update_container_status("failed", f"Processing error: {str(e)}")
-                        finally:
-                            processed.add(email)
-                        logger.info("🏁 ENHANCED CAPTCHA PROCESSING COMPLETED")
-                        logger.info("*" * 70)
+                                logger.warning(f"⚠️ SESSION FILE NOT FOUND: {session_file}")
+                            
+                            try:
+                                logger.info(f"🚀 Starting CAPTCHA resolution for: {email}")
+                                success = resolve_with_gui_automatic(email)
+                                if success:
+                                    logger.info("🎉 CAPTCHA RESOLUTION SUCCESSFUL!")
+                                else:
+                                    logger.warning("⚠️ CAPTCHA RESOLUTION FAILED")
+                            except Exception as e:
+                                logger.error(f"❌ Error processing CAPTCHA request: {e}")
+                                import traceback
+                                logger.error(traceback.format_exc())
+                                update_container_status("failed", f"Processing error: {str(e)}")
+                            finally:
+                                processed.add(email)
+                                logger.info(f"✅ Email marked as processed: {email}")
+                            
+                            logger.info("🏁 ENHANCED CAPTCHA PROCESSING COMPLETED")
+                            logger.info("*" * 70)
                         
-                # Update the queue file
-                remaining = [e for e in lines if e not in processed]
-                with open(WATCH_FILE, "w") as f:
-                    for email in remaining:
-                        f.write(f"{email}\n")
+                        elif email in processed:
+                            logger.debug(f"[LOOP {loop_count}] Email {email} already processed")
+                        elif not email:
+                            logger.debug(f"[LOOP {loop_count}] Empty email line")
+                        
+                    # Update the queue file (remove processed emails)
+                    remaining = [e for e in lines if e and e not in processed]
+                    logger.info(f"📝 Updating queue file: {len(remaining)} emails remaining")
+                    
+                    with open(WATCH_FILE, "w") as f:
+                        for email in remaining:
+                            f.write(f"{email}\n")
+                            
+                except Exception as file_error:
+                    logger.error(f"❌ Error reading queue file: {file_error}")
+                    
             else:
                 # Update status when idle
-                update_container_status("ready", "Waiting for CAPTCHA requests")
+                if loop_count % 10 == 0:  # Every 100 seconds
+                    logger.info(f"💤 [LOOP {loop_count}] No queue file - waiting for CAPTCHA requests...")
+                    update_container_status("ready", "Waiting for CAPTCHA requests")
+                else:
+                    logger.debug(f"[LOOP {loop_count}] No queue file found: {WATCH_FILE}")
                         
+            # Sleep with debug info
+            logger.debug(f"[LOOP {loop_count}] Sleeping 10 seconds...")
             time.sleep(10)
             
         except KeyboardInterrupt:
@@ -1036,21 +1153,27 @@ def watch_loop():
             update_container_status("stopping", "Stopped by user")
             break
         except Exception as e:
-            logger.error(f"❌ Error in main loop: {e}", exc_info=True)
+            logger.error(f"❌ Error in main loop iteration {loop_count}: {e}", exc_info=True)
             update_container_status("failed", f"Main loop error: {str(e)}")
             time.sleep(5)
 
 if __name__ == "__main__":
-    logger.info("🚀 Starting ENHANCED CAPTCHA Watcher with Improved Session Transfer")
+    logger.info("🚀 Starting ENHANCED CAPTCHA Watcher with DEBUG LOGGING")
     logger.info(f"Container ID: {os.environ.get('HOSTNAME', 'unknown')}")
     logger.info(f"Email: {os.environ.get('EMAIL', 'unknown')}")
+    logger.info(f"Python path: {sys.path}")
+    logger.info(f"Working directory: {os.getcwd()}")
+    logger.info(f"Process ID: {os.getpid()}")
     
     # Initial status update
-    update_container_status("initializing", "Starting enhanced CAPTCHA watcher")
+    update_container_status("initializing", "Starting enhanced CAPTCHA watcher with debug logging")
     
     try:
+        logger.info("✅ Calling watch_loop()...")
         watch_loop()
     except Exception as e:
         logger.error(f"❌ Fatal error in CAPTCHA watcher: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         update_container_status("failed", f"Fatal error: {str(e)}")
         sys.exit(1)

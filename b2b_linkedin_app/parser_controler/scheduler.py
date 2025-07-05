@@ -5,7 +5,7 @@ import json
 
 logger = logging.getLogger(__name__)
 
-def setup_periodic_tasks():
+def setup_periodic_tasks(sender, **kwargs):
     task_name = 'start_parsing'
     periodic_name = 'Start Parsing Daily'
 

@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Parsing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            z-index: -1;
+            animation: gradientShift 20s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+            text-decoration: none;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 60px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            animation: glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5)); }
+            to { filter: drop-shadow(0 0 30px rgba(118, 75, 162, 0.8)); }
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #a1a1aa;
+            font-weight: 400;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .connection-status.connected {
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .connection-status.disconnected {
+            border-color: rgba(239, 68, 68, 0.5);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .connection-status.websocket-connected {
+            border-color: rgba(34, 197, 94, 0.8);
+            background: rgba(34, 197, 94, 0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #a1a1aa;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            opacity: 0.6;
+        }
+
+        .progress-section h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #ffffff;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #22c55e, #16a34a, #15803d);
+            width: 0%;
+            border-radius: 20px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .progress-text {
+            font-size: 1.1rem;
+            color: #ffffff;
+            margin-top: 16px;
+        }
+
+        .progress-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            font-size: 0.9rem;
+            color: #a1a1aa;
+        }
+
+        .live-feed {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 28px;
+            height: 500px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            border-color: rgba(102, 126, 234, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .panel h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-content {
+            height: calc(100% - 60px);
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+
+        .panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .panel-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .profile-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            animation: slideInUp 0.5s ease;
+        }
+
+        .profile-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(102, 126, 234, 0.4);
+            transform: translateX(4px);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .profile-name {
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 6px;
+            font-size: 1rem;
+        }
+
+        .profile-company {
+            color: #22c55e;
+            font-weight: 500;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        .profile-email {
+            color: #a1a1aa;
+            font-size: 0.85rem;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+        }
+
+        .profile-email.has-email {
+            color: #22c55e;
+        }
+
+        .vnc-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .vnc-card.active {
+            border-color: rgba(34, 197, 94, 0.5);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .vnc-button {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .vnc-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            position: relative;
+        }
+
+        .status-running { background: #22c55e; }
+        .status-pending { background: #f59e0b; }
+        .status-completed { background: #3b82f6; }
+        .status-error { background: #ef4444; }
+        .status-ready { background: #22c55e; }
+        .status-solving { background: #f59e0b; }
+        .status-starting { background: #8b5cf6; }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #22c55e;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .search-param {
+            color: #ffffff;
+            font-size: 0.9rem;
+        }
+
+        .search-param strong {
+            color: #22c55e;
+            margin-right: 8px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .live-feed {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .back-btn, .connection-status {
+                position: relative;
+                top: auto;
+                left: auto;
+                right: auto;
+                margin-bottom: 20px;
+                display: inline-block;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+
+        /* Extra animations */
+        .fade-in {
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Real-time pulse effect for updated data */
+        .data-updated {
+            animation: dataUpdate 0.6s ease;
+        }
+
+        @keyframes dataUpdate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* WebSocket-specific styles */
+        .websocket-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+
+        .live-update {
+            border-left: 3px solid #22c55e;
+            animation: liveGlow 0.5s ease;
+        }
+
+        @keyframes liveGlow {
+            0% { border-left-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+            100% { border-left-color: transparent; background: transparent; }
+        }
+    </style>
+</head>
+<body>
+    <a href="/admin/parser_controler/parserrequest/" class="back-btn">← Back to Admin</a>
+    
+    <div class="connection-status" id="connection-status">
+        <span class="status-indicator status-pending pulse"></span>
+        <span class="loading-spinner"></span>
+        Connecting...
+    </div>
+
+    <div class="container">
+        <div class="header fade-in">
+            <h1>🚀 LinkedIn Parsing Dashboard</h1>
+            <p>Real-time monitoring • Request ID: {{ request_id }}</p>
+        </div>
+
+        <div class="stats-grid fade-in">
+            <div class="stat-card">
+                <div class="stat-number" id="profiles">0</div>
+                <div class="stat-label">Profiles Found</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="emails">0</div>
+                <div class="stat-label">Emails Extracted</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pages">0</div>
+                <div class="stat-label">Pages Processed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="rate">0%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+
+        <div class="progress-section fade-in">
+            <h3>📊 Parsing Progress</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+            <div class="progress-text" id="progress-text">Initializing parsing engine...</div>
+            <div class="progress-details">
+                <span>Page <span id="current-page">1</span> of <span id="total-pages">10</span></span>
+                <span>ETA: <span id="eta">Calculating...</span></span>
+            </div>
+            <div class="search-params" style="margin-top: 20px; padding: 16px; background: rgba(255, 255, 255, 0.05); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                <h4 style="margin-bottom: 12px; color: #a1a1aa; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Search Parameters</h4>
+                <div class="search-params-content" id="search-params-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                    <div>Loading search parameters...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="live-feed fade-in">
+            <div class="panel">
+                <h3>🔍 Latest Profiles</h3>
+                <div class="panel-content" id="profiles-list">
+                    <div class="empty-state">
+                        <div class="icon">👥</div>
+                        <div>Profiles will appear here as they're extracted</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🖥️ VNC Sessions</h3>
+                <div class="panel-content" id="vnc-list">
+                    <div class="empty-state">
+                        <div class="icon">💻</div>
+                        <div>No active VNC sessions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let requestId = {{ request_id }};
+        let isConnected = false;
+        let lastUpdate = 0;
+        let previousData = {};
+        let websocket = null;
+        let isWebSocketConnected = false;
+        
+        // WebSocket connection
+        function connectWebSocket() {
+            const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+            const wsUrl = `${wsScheme}://${window.location.host}/ws/parsing/${requestId}/`;
+            
+            console.log('🔌 Attempting WebSocket connection to:', wsUrl);
+            websocket = new WebSocket(wsUrl);
+            
+            websocket.onopen = function(event) {
+                isWebSocketConnected = true;
+                console.log('✅ WebSocket connected for real-time updates');
+                updateConnectionStatus(true, true);
+            };
+            
+            websocket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'parsing_update') {
+                        handleParsingUpdate(data);
+                    } else if (data.type === 'log_message') {
+                        handleLogMessage(data);
+                    }
+                } catch (e) {
+                    console.error('❌ WebSocket message parse error:', e);
+                }
+            };
+            
+            websocket.onclose = function(event) {
+                isWebSocketConnected = false;
+                console.log('❌ WebSocket disconnected, attempting to reconnect...');
+                updateConnectionStatus(isConnected, false);
+                
+                // Attempt to reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            websocket.onerror = function(error) {
+                console.error('🚨 WebSocket error:', error);
+                isWebSocketConnected = false;
+                updateConnectionStatus(isConnected, false);
+            };
+        }
+
+        // Handle real-time parsing updates via WebSocket
+        function handleParsingUpdate(data) {
+            const { action, message, data: updateData, timestamp } = data;
+            
+            console.log('🔴 Live update:', action, message);
+            
+            // Update progress text with real-time messages
+            const progressText = document.getElementById('progress-text');
+            progressText.textContent = message;
+            progressText.classList.add('live-update');
+            setTimeout(() => progressText.classList.remove('live-update'), 500);
+            
+            // Handle specific actions
+            switch(action) {
+                case 'profile_saved':
+                    // Update stats in real-time
+                    if (updateData.total_count) {
+                        animateNumberChange('profiles', updateData.total_count);
+                    }
+                    if (updateData.has_email) {
+                        const currentEmails = parseInt(document.getElementById('emails').textContent) || 0;
+                        animateNumberChange('emails', currentEmails + 1);
+                    }
+                    
+                    // Add profile to list immediately
+                    addProfileToList(updateData);
+                    break;
+                    
+                case 'page_processing':
+                    // Update current page
+                    if (updateData.current_page) {
+                        document.getElementById('current-page').textContent = updateData.current_page;
+                    }
+                    break;
+                    
+                case 'cards_collected':
+                    // Update progress with visual feedback
+                    if (updateData.total_collected && updateData.total) {
+                        const percentage = (updateData.current / updateData.total) * 100;
+                        updateProgress(percentage);
+                    }
+                    break;
+                    
+                case 'enhancement_started':
+                    progressText.textContent = '🔍 Starting email enhancement phase...';
+                    break;
+                    
+                case 'enhancing_profile':
+                    if (updateData.current && updateData.total) {
+                        const percentage = (updateData.current / updateData.total) * 50 + 50; // Second half of progress
+                        updateProgress(percentage);
+                    }
+                    break;
+            }
+        }
+
+        // Handle real-time log messages
+        function handleLogMessage(data) {
+            const { level, logger, message, timestamp } = data;
+            console.log(`[${level}] [${logger}] ${message}`);
+            
+            // Update progress text with important log messages
+            if (level === 'INFO' && (logger === 'SEARCH' || logger === 'ENHANCE')) {
+                const progressText = document.getElementById('progress-text');
+                progressText.textContent = message;
+                progressText.classList.add('live-update');
+                setTimeout(() => progressText.classList.remove('live-update'), 500);
+            }
+        }
+
+        // Add profile to list with animation
+        function addProfileToList(profileData) {
+            const profilesList = document.getElementById('profiles-list');
+            
+            // Remove empty state if exists
+            const emptyState = profilesList.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+            
+            // Create new profile item
+            const profileItem = document.createElement('div');
+            profileItem.className = 'profile-item live-update';
+            profileItem.innerHTML = `
+                <div class="profile-name">${profileData.name || 'Unknown'}</div>
+                <div class="profile-company">${profileData.company || 'Unknown Company'}</div>
+                <div class="profile-email ${profileData.has_email ? 'has-email' : ''}">${profileData.has_email ? '✅ ' + profileData.email : '❌ No email found'}</div>
+                <div style="color: #6b7280; font-size: 0.75rem; margin-top: 4px;">Just found</div>
+            `;
+            
+            // Insert at top with animation
+            profilesList.insertBefore(profileItem, profilesList.firstChild);
+            
+            // Remove live-update class after animation
+            setTimeout(() => profileItem.classList.remove('live-update'), 500);
+            
+            // Keep only last 15 profiles
+            const profiles = profilesList.querySelectorAll('.profile-item');
+            if (profiles.length > 15) {
+                profiles[profiles.length - 1].remove();
+            }
+        }
+
+        // Update progress bar with smooth animation
+        function updateProgress(percentage) {
+            const progressFill = document.getElementById('progress');
+            progressFill.style.width = Math.min(percentage, 100) + '%';
+        }
+        
+        function updateConnectionStatus(apiConnected, wsConnected = isWebSocketConnected) {
+            isConnected = apiConnected;
+            const status = document.getElementById('connection-status');
+            
+            if (wsConnected) {
+                status.innerHTML = '<span class="websocket-indicator"></span>🔴 Live Connected';
+                status.className = 'connection-status websocket-connected';
+            } else if (apiConnected) {
+                status.innerHTML = '<span class="status-indicator status-running"></span>API Connected';
+                status.className = 'connection-status connected';
+            } else {
+                status.innerHTML = '<span class="status-indicator status-error pulse"></span>Disconnected';
+                status.className = 'connection-status disconnected';
+            }
+        }
+        
+        function animateNumberChange(elementId, newValue, suffix = '') {
+            const element = document.getElementById(elementId);
+            const currentValue = parseInt(element.textContent) || 0;
+            
+            if (newValue !== currentValue) {
+                // Add update animation
+                element.classList.add('data-updated');
+                setTimeout(() => element.classList.remove('data-updated'), 600);
+                
+                // Animate the number change
+                animateNumber(elementId, newValue, suffix);
+            }
+        }
+        
+        function animateNumber(elementId, targetValue, suffix = '') {
+            const element = document.getElementById(elementId);
+            const currentValue = parseInt(element.textContent) || 0;
+            const increment = Math.ceil((targetValue - currentValue) / 10);
+            
+            if (currentValue < targetValue) {
+                element.textContent = Math.min(currentValue + increment, targetValue) + suffix;
+                setTimeout(() => animateNumber(elementId, targetValue, suffix), 50);
+            }
+        }
+        
+        function updateDashboard() {
+            // Fetch parsing status (keep as fallback)
+            fetch(`/parser_controler/api/parsing-status/${requestId}/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateConnectionStatus(true);
+                    lastUpdate = Date.now();
+                    
+                    if (data.status === 'success') {
+                        // Only update if WebSocket is not connected (fallback mode)
+                        if (!isWebSocketConnected) {
+                            // Update stats with animation for changes
+                            animateNumberChange('profiles', data.stats.profilesFound);
+                            animateNumberChange('emails', data.stats.emailsExtracted);
+                            animateNumberChange('pages', data.stats.pagesProcessed);
+                            animateNumberChange('rate', data.stats.successRate, '%');
+                            
+                            // Update progress bar
+                            const progressPercent = Math.min((data.stats.pagesProcessed / data.stats.totalPages) * 100, 100);
+                            document.getElementById('progress').style.width = progressPercent + '%';
+                            
+                            // Update progress text based on request status
+                            const progressText = document.getElementById('progress-text');
+                            if (data.request_info.status === 'running') {
+                                if (data.stats.profilesFound > 0) {
+                                    progressText.textContent = `Processing LinkedIn profiles... ${data.stats.profilesFound} found so far`;
+                                } else {
+                                    progressText.textContent = 'Searching LinkedIn profiles...';
+                                }
+                            } else if (data.request_info.status === 'completed') {
+                                progressText.textContent = `✅ Parsing completed! Found ${data.stats.profilesFound} profiles`;
+                            } else if (data.request_info.status === 'error') {
+                                progressText.textContent = `❌ Error: ${data.request_info.error_message || 'Unknown error'}`;
+                            } else {
+                                progressText.textContent = `Status: ${data.request_info.status}`;
+                            }
+                        }
+                        
+                        // Always update page info and search parameters
+                        document.getElementById('current-page').textContent = data.stats.currentPage;
+                        document.getElementById('total-pages').textContent = data.stats.totalPages;
+                        
+                        // Calculate ETA
+                        if (data.stats.pagesProcessed > 0 && data.request_info.status === 'running') {
+                            const avgTimePerPage = 60; // seconds
+                            const remainingPages = data.stats.totalPages - data.stats.pagesProcessed;
+                            const etaSeconds = remainingPages * avgTimePerPage;
+                            const etaMinutes = Math.round(etaSeconds / 60);
+                            document.getElementById('eta').textContent = etaMinutes > 0 ? `${etaMinutes} min` : 'Almost done';
+                        } else {
+                            document.getElementById('eta').textContent = data.request_info.status === 'completed' ? 'Completed' : 'Calculating...';
+                        }
+
+                        // Update search parameters
+                        if (data.request_info && data.request_info.keywords) {
+                            const paramsHtml = `
+                                <div class="search-param"><strong>Keywords:</strong> ${Array.isArray(data.request_info.keywords) ? data.request_info.keywords.join(', ') : data.request_info.keywords}</div>
+                                <div class="search-param"><strong>Location:</strong> ${data.request_info.location}</div>
+                                <div class="search-param"><strong>Limit:</strong> ${data.request_info.limit}</div>
+                                <div class="search-param"><strong>Pages:</strong> ${data.request_info.start_page} - ${data.request_info.end_page}</div>
+                                <div class="search-param"><strong>Status:</strong> ${data.request_info.status}</div>
+                            `;
+                            document.getElementById('search-params-content').innerHTML = paramsHtml;
+                        }
+
+                        // Update profiles list only if WebSocket is not connected
+                        if (!isWebSocketConnected) {
+                            const profilesList = document.getElementById('profiles-list');
+                            if (data.latest_profiles && data.latest_profiles.length > 0) {
+                                const profilesHtml = data.latest_profiles.map(p => `
+                                    <div class="profile-item">
+                                        <div class="profile-name">${p.name}</div>
+                                        <div class="profile-company">${p.company || 'Unknown Company'}</div>
+                                        ${p.position && p.position !== 'Unknown Position' ? `<div style="color: #a1a1aa; font-size: 0.85rem; margin-bottom: 4px;">${p.position}</div>` : ''}
+                                        <div class="profile-email ${p.email && p.email !== 'Not found' ? 'has-email' : ''}">${p.email && p.email !== 'Not found' ? '✅ ' + p.email : '❌ No email found'}</div>
+                                        ${p.created_at ? `<div style="color: #6b7280; font-size: 0.75rem; margin-top: 4px;">Found at ${p.created_at}</div>` : ''}
+                                    </div>
+                                `).join('');
+                                
+                                if (profilesList.innerHTML !== profilesHtml) {
+                                    profilesList.innerHTML = profilesHtml;
+                                }
+                            } else {
+                                const emptyMessage = data.request_info.status === 'running' ? 
+                                    '<div class="empty-state"><div class="icon">🔍</div><div>Searching for profiles...</div></div>' :
+                                    '<div class="empty-state"><div class="icon">👥</div><div>No profiles found yet</div></div>';
+                                profilesList.innerHTML = emptyMessage;
+                            }
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Update error:', error);
+                    updateConnectionStatus(false);
+                });
+
+            // Fetch VNC containers
+            fetch('/parser_controler/api/active-containers/')
+                .then(response => response.json())
+                .then(data => {
+                    const vncList = document.getElementById('vnc-list');
+                    if (data.containers && data.containers.length > 0) {
+                        const vncHtml = data.containers.map(vnc => `
+                            <div class="vnc-card ${vnc.status === 'ready' ? 'active' : ''}">
+                                <div style="margin-bottom: 10px;">
+                                    <span class="status-indicator status-${vnc.status} ${vnc.status === 'solving' ? 'pulse' : ''}"></span>
+                                    Port ${vnc.novnc_port}
+                                </div>
+                                <div style="color: #a1a1aa; margin-bottom: 8px; font-size: 0.9rem;">
+                                    ${vnc.email}
+                                </div>
+                                <div style="color: #6b7280; font-size: 0.8rem; margin-bottom: 12px;">
+                                    Status: ${vnc.status.charAt(0).toUpperCase() + vnc.status.slice(1)}
+                                </div>
+                                <a href="${vnc.auto_connect_url}" target="_blank" class="vnc-button">
+                                    🖥️ Open VNC
+                                </a>
+                            </div>
+                        `).join('');
+                        vncList.innerHTML = vncHtml;
+                    } else {
+                        vncList.innerHTML = `
+                            <div class="empty-state">
+                                <div class="icon">💻</div>
+                                <div>No active VNC sessions</div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('VNC error:', error);
+                });
+        }
+
+        // Check connection status
+        function checkConnection() {
+            const now = Date.now();
+            if (isConnected && (now - lastUpdate) > 15000) { // 15 seconds without update
+                updateConnectionStatus(false);
+            }
+        }
+
+        // Initialize dashboard
+        function initializeDashboard() {
+            console.log('🚀 Initializing real-time dashboard...');
+            
+            // Connect WebSocket for real-time updates
+            connectWebSocket();
+            
+            // Keep polling as fallback (reduced frequency)
+            setInterval(updateDashboard, 5000);
+            setInterval(checkConnection, 5000);
+            
+            // Initial load
+            updateDashboard();
+            
+            console.log('✅ Dashboard initialized with WebSocket support');
+        }
+
+        // Start the enhanced dashboard
+        initializeDashboard();
+        
+        // Add visibility change listener to manage connections
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // Reconnect WebSocket if needed
+                if (!isWebSocketConnected && websocket.readyState !== WebSocket.CONNECTING) {
+                    connectWebSocket();
+                }
+                // Immediate update when tab becomes visible
+                updateDashboard();
+            }
+        });
+
+        // Handle page unload
+        window.addEventListener('beforeunload', function() {
+            if (websocket) {
+                websocket.close();
+            }
+        });
+    </script>
+</body>
+</html>

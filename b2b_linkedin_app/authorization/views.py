@@ -4,6 +4,10 @@ from django.contrib.auth.decorators import login_required
 from .forms import RegistrationForm
 
 def register(request):
+    if request.user.is_authenticated:
+        return redirect('post_login_redirect')
+
+
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
         if form.is_valid():

@@ -2,6 +2,7 @@ import os
 import logging
 from pathlib import Path
 from decouple import config
+from django.templatetags.static import static
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -31,6 +32,13 @@ MAILGUN_API_KEY=config('MAILGUN_API_KEY', cast=str, default=None)
 
 #APP
 INSTALLED_APPS = [
+    "unfold",  # before django.contrib.admin
+    "unfold.contrib.filters",  # optional, if special filters are needed
+    "unfold.contrib.forms",  # optional, if special form elements are needed
+    "unfold.contrib.inlines",  # optional, if special inlines are needed
+    "unfold.contrib.import_export",  # optional, if django-import-export package is used
+    "unfold.contrib.guardian",  # optional, if django-guardian package is used
+    "unfold.contrib.simple_history",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,15 +46,40 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    "channels",
     #Apps for LinkedIn parser
     "mailer",
     "parser_controler",
     "django_celery_beat",
+    "exporter",
     'django_celery_results',
     'rest_framework',
     'authorization',
     'payments',
 ]
+
+UNFOLD = {
+    "SITE_TITLE": "Linkedin Parser",
+    "SITE_HEADER": "Linkedin Parser Admin",
+    "SITE_TAGLINE": "B2B LinkedIn Automation",
+    "SHOW_HISTORY": True,
+    "STYLES": [
+        lambda request: ("/static/admin/css/beautiful_admin.css")
+    ],
+    "DASHBOARD_CALLBACK": "b2b_linkedin_app.admin.dashboard_callback",
+    "SITE_ICON": "/static/images/linkedin-svgrepo-com.svg",  # place your icon in static folder
+    "LOGIN": {
+        "image": "/static/images/login_bg.svg",  # optional background image
+        "heading": "Welcome to LinkedIn Parser",
+        "sub_heading": "Automate your lead generation",
+    },
+    "FOOTER": {
+        "copyright": "Linkedin Parser © 2025",
+        "links": [
+            {"name": "Support", "url": "mailto:support@example.com"},
+        ],
+    },
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -171,8 +204,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
-
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # Default primary key field type
@@ -213,6 +246,11 @@ LOGGING = {
             'handlers': ['console', 'file'],
             'level': 'WARNING',
             'propagate': True,
+        },
+        'exporter': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
         },
         'celery': {
             'handlers': ['console', 'file'],
@@ -259,4 +297,68 @@ STRIPE_SUBSCRIPTION_PRICE_ID = config('STRIPE_SUBSCRIPTION_PRICE_ID', cast=str, 
 
 os.makedirs(os.path.join(BASE_DIR, 'logs'), exist_ok=True)
 
+
 CELERYD_HIJACK_ROOT_LOGGER = False 
+ASGI_APPLICATION = 'b2b_linkedin_app.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('redis', 6379)],
+        },
+    },
+}
+
+# =========================
+# SMTP
+# =========================
+
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', cast=str, default=None)
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', cast=str, default=None)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', cast=str, default=None)
+
+
+# =========================
+# GOOGLE SHEETS CONFIGURATION - ENHANCED
+# =========================
+GSHEET_CREDENTIALS_PATH = BASE_DIR / "credentials/linkedin-parser-463408-e93a62d9e95d.json"
+GSHEET_SPREADSHEET_ID = "10reLINkOiYPSfMaWoF7MSd4doXNKk0X3skbJzij8s3E"
+
+# Google Sheets Export Settings
+GSHEET_EXPORT_ENABLED = config('GSHEET_EXPORT_ENABLED', cast=bool, default=True)
+GSHEET_BATCH_SIZE = config('GSHEET_BATCH_SIZE', cast=int, default=10)
+GSHEET_RETRY_ATTEMPTS = config('GSHEET_RETRY_ATTEMPTS', cast=int, default=3)
+GSHEET_RATE_LIMIT_DELAY = config('GSHEET_RATE_LIMIT_DELAY', cast=int, default=2)
+
+# Validate Google Sheets configuration on startup
+def validate_google_sheets_config():
+    """Validate Google Sheets configuration"""
+    import os
+    
+    if GSHEET_EXPORT_ENABLED:
+        # Check credentials file exists
+        if not os.path.exists(GSHEET_CREDENTIALS_PATH):
+            print(f"⚠️  WARNING: Google Sheets credentials file not found: {GSHEET_CREDENTIALS_PATH}")
+            return False
+            
+        # Check spreadsheet ID is set
+        if not GSHEET_SPREADSHEET_ID:
+            print("⚠️  WARNING: GSHEET_SPREADSHEET_ID not configured")
+            return False
+            
+        print("Google Sheets configuration validated")
+        return True
+    else:
+        print("ℹ️  Google Sheets export is disabled")
+        return True
+
+# Run validation on startup (optional)
+try:
+    validate_google_sheets_config()
+except Exception as e:
+    print(f" Error validating Google Sheets config: {e}")

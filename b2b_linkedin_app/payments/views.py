@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.shortcuts import redirect, render
 from authorization.models import User
+from authorization.utils import create_one_time_sub
 from .models import UserPayment
 import logging
 
@@ -39,6 +40,8 @@ def create_one_time_checkout(request):
             success_url='http://localhost:8001/payment/success/?session_id={CHECKOUT_SESSION_ID}',
             cancel_url='http://localhost:8001/payment/cancel/'
         )
+
+        create_one_time_sub(request.user)
 
         return redirect(session.url)
 

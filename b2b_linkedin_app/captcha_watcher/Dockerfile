@@ -1,5 +1,4 @@
 FROM python:3.11
-
 # 1) Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
     curl \
@@ -51,29 +50,22 @@ RUN apt-get update && apt-get install -y \
     docker.io \
     docker-compose && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # 2) Установка TigerVNC (включает x0vncserver)
 RUN apt-get update && \
     apt-get install -y tigervnc-scraping-server && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # 3) Установка Google Chrome
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt-get update && \
     apt-get install -y ./google-chrome-stable_current_amd64.deb || apt-get -f install -y && \
     rm ./google-chrome-stable_current_amd64.deb && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # 4) Установка noVNC + websockify
 RUN git clone https://github.com/novnc/noVNC.git /opt/novnc && \
-    git clone https://github.com/novnc/websockify /opt/novnc/utils/websockify && \
     ln -s /opt/novnc/vnc.html /opt/novnc/index.html && \
-    chmod +x /opt/novnc/utils/websockify/websockify.py && \
     pip install websockify
-
 # 5) Подготовка окружения
 RUN touch /tmp/.Xauthority && chmod 600 /tmp/.Xauthority
-
 # 6) Chrome wrapper
 RUN echo '#!/bin/bash\n\
 export DISPLAY=:0\n\
@@ -100,51 +92,42 @@ exec /usr/bin/google-chrome \
     --start-maximized \
     "$@"' > /usr/bin/chrome-wrapper && \
     chmod +x /usr/bin/chrome-wrapper
-
 # 7) Переменные окружения
 ENV DISPLAY=:0
 ENV CHROME_BIN=/usr/bin/google-chrome
 ENV CHROME_PATH=/usr/bin/google-chrome
-
 # 8) Рабочая директория
 WORKDIR /app
-
 # 9) Установка Python-зависимостей
 COPY captcha_watcher/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
-
 # 10) Копирование кода
 COPY . /app
-
 # 11) Конфигурация supervisord
 COPY captcha_watcher/supervisord.conf /etc/supervisord.conf
-
 # 12) Создание директорий
 RUN mkdir -p /app/shared_volume /app/cookies /tmp/runtime-root /var/log/supervisor /var/run/dbus && \
     chmod 700 /tmp/runtime-root
-
 # 13) Chrome-профиль
 RUN mkdir -p /tmp/chrome-profile && chmod 755 /tmp/chrome-profile
-
 # 14) Подключение вспомогательных скриптов
 COPY captcha_watcher/startup-cleanup.sh /app/captcha_watcher/startup-cleanup.sh
-RUN chmod +x /app/captcha_watcher/startup-cleanup.sh
-
 COPY captcha_watcher/start.sh /app/captcha_watcher/start.sh
+COPY captcha_watcher/websockify-wrapper.sh /app/websockify-wrapper.sh
+# Исправление окончаний строк для Windows совместимости
+RUN sed -i 's/\r$//' /app/captcha_watcher/start.sh
+RUN sed -i 's/\r$//' /app/captcha_watcher/startup-cleanup.sh
+RUN sed -i 's/\r$//' /app/websockify-wrapper.sh
+# Установка прав на выполнение
 RUN chmod +x /app/captcha_watcher/start.sh
-
+RUN chmod +x /app/captcha_watcher/startup-cleanup.sh
+RUN chmod +x /app/websockify-wrapper.sh
 COPY captcha_watcher/assets/auto_connect.html /opt/novnc/auto_connect.html
 RUN chmod -R 755 /opt/novnc && chmod 644 /opt/novnc/auto_connect.html
-
-COPY captcha_watcher/websockify-wrapper.sh /app/websockify-wrapper.sh
-RUN chmod +x /app/websockify-wrapper.sh
-
 # 15) Порты
 EXPOSE 5900 6080
-
 # 16) Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
     CMD curl -f http://localhost:6080/ && nc -z localhost 5900 || exit 1
-
 # 17) Запуск
 ENTRYPOINT ["/bin/bash", "/app/captcha_watcher/start.sh"]

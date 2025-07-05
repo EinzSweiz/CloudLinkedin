@@ -25,8 +25,6 @@ LINKEDIN_LOGIN_URL = settings.LINKEDIN_LOGIN_URL
 LOGS_DIR = os.path.join(os.path.dirname(__file__), '..', '..', 'logs')
 os.makedirs(LOGS_DIR, exist_ok=True)
 
-
-
 def check_captcha_success(email, timeout=120):
     """Check if CAPTCHA was solved in VNC container"""
     logger.info(f"🔍 Checking for CAPTCHA success notification for {email}...")
@@ -123,7 +121,7 @@ def save_captcha_session_for_transfer(driver, email):
             'local_storage': driver.execute_script("return JSON.stringify(localStorage);"),
             'session_storage': driver.execute_script("return JSON.stringify(sessionStorage);"),
             
-            # 🔥 NEW: Enhanced browser state capture
+            # Enhanced browser state capture
             'browser_fingerprint': {
                 'platform': driver.execute_script("return navigator.platform;"),
                 'language': driver.execute_script("return navigator.language;"),
@@ -133,7 +131,7 @@ def save_captcha_session_for_transfer(driver, email):
                 'viewport': driver.execute_script("return {width: window.innerWidth, height: window.innerHeight};"),
             },
             
-            # 🔥 NEW: Capture request headers and network state
+            # Capture request headers and network state
             'request_headers': driver.execute_script("""
                 return {
                     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -148,7 +146,7 @@ def save_captcha_session_for_transfer(driver, email):
                 };
             """),
             
-            # 🔥 NEW: Capture form data if present
+            # Capture form data if present
             'form_data': driver.execute_script("""
                 try {
                     var forms = document.forms;
@@ -169,7 +167,7 @@ def save_captcha_session_for_transfer(driver, email):
                 } catch(e) { return {}; }
             """),
             
-            # 🔥 NEW: Page state indicators
+            # Page state indicators
             'page_state': {
                 'title': driver.title,
                 'ready_state': driver.execute_script("return document.readyState;"),
@@ -252,6 +250,7 @@ def _capture_linkedin_state(driver):
         """)
     except:
         return {'error': 'script_execution_failed'}
+
 def get_logged_driver(retry_count=3):
     logger.info("[LOGIN] Attempting login using saved cookies or credentials...")
     
@@ -277,8 +276,8 @@ def get_logged_driver(retry_count=3):
 
         logger.info(f"[CHROME] Starting Chrome driver...")
         driver = uc.Chrome(options=options, version_main=136)
-        driver.set_page_load_timeout(60)
-        driver.implicitly_wait(20)
+        driver.set_page_load_timeout(120)
+        driver.implicitly_wait(10)
         logger.info(f"[CHROME] Chrome started successfully")
 
         # Anti-detection
@@ -309,44 +308,121 @@ def get_logged_driver(retry_count=3):
             if os.path.exists(cookie_path):
                 os.remove(cookie_path)
 
-        # Manual login
+        # Manual login - FIXED VERSION
         logger.info(f"[LOGIN] Attempting manual login for: {EMAIL}")
         driver.get(LINKEDIN_LOGIN_URL)
-        
-        wait = WebDriverWait(driver, 30)
-        email_input = wait.until(EC.presence_of_element_located((By.ID, "username")))
-        password_input = wait.until(EC.presence_of_element_located((By.ID, "password")))
-        
-        email_input.clear()
-        email_input.send_keys(EMAIL)
-        
-        password_input.clear()
-        password_input.send_keys(PASSWORD)
-        password_input.send_keys(Keys.RETURN)
-        
-        time.sleep(6)
 
-        current_url = driver.current_url
+        # Add debugging
+        logger.info(f"[LOGIN] Manual login - URL after navigation: {driver.current_url}")
+        logger.info(f"[LOGIN] Manual login - Page title: {driver.title}")
+
+        time.sleep(3)
+
+        # Check what type of page we landed on
+        page_source = driver.page_source.lower()
+        current_url = driver.current_url.lower()
+
+        if "welcome back" in page_source or "welcome back" in driver.title.lower():
+            logger.info(f"[WELCOME BACK] Detected welcome back screen immediately for: {EMAIL}")
+            
+            try:
+                # On welcome back page, only password field exists
+                wait = WebDriverWait(driver, 15)
+                password_input = wait.until(EC.presence_of_element_located((By.ID, "password")))
+                
+                logger.info("[WELCOME BACK] Found password field, filling it...")
+                password_input.clear()
+                password_input.send_keys(PASSWORD)
+                
+                # Submit the form
+                try:
+                    # Try to find and click the Sign in button
+                    sign_in_btn = driver.find_element(By.XPATH, "//button[contains(text(), 'Sign in') or @type='submit']")
+                    sign_in_btn.click()
+                    logger.info("[WELCOME BACK] Clicked Sign in button")
+                except:
+                    # Fallback: press Enter
+                    password_input.send_keys(Keys.RETURN)
+                    logger.info("[WELCOME BACK] Pressed Enter on password field")
+                
+                time.sleep(8)  # Wait longer for response
+                
+                # Check result
+                current_url_after = driver.current_url.lower()
+                logger.info(f"[WELCOME BACK] After submission - URL: {current_url_after}")
+                
+                if "feed" in current_url_after:
+                    save_cookies(driver, cookie_path)
+                    logger.info(f"[LOGIN] ✅ Success with welcome back: {EMAIL}")
+                    return driver
+                elif "checkpoint" in current_url_after:
+                    logger.warning(f"[WELCOME BACK] Redirected to checkpoint")
+                    # Handle checkpoint below
+                    current_url = current_url_after
+                    title = driver.title.lower()
+                else:
+                    logger.warning(f"[WELCOME BACK] Unexpected result: {current_url_after}")
+                    
+            except Exception as welcome_error:
+                logger.error(f"[WELCOME BACK] Error handling welcome back: {welcome_error}")
+                # Continue to regular login handling below
+
+        else:
+            # Regular login page - check for username and password fields
+            logger.info("[LOGIN] Detected regular login page")
+            
+            try:
+                wait = WebDriverWait(driver, 20)
+                
+                # Check if username field exists (regular login)
+                try:
+                    email_input = wait.until(EC.presence_of_element_located((By.ID, "username")))
+                    password_input = wait.until(EC.presence_of_element_located((By.ID, "password")))
+                    
+                    logger.info("[LOGIN] Found username and password fields")
+                    
+                    email_input.clear()
+                    email_input.send_keys(EMAIL)
+                    
+                    password_input.clear()
+                    password_input.send_keys(PASSWORD)
+                    password_input.send_keys(Keys.RETURN)
+                    
+                    logger.info("[LOGIN] Submitted regular login form")
+                    time.sleep(8)
+                    
+                except Exception as form_error:
+                    logger.error(f"[LOGIN] Could not find login form elements: {form_error}")
+                    raise Exception("login_form_not_found")
+                    
+            except Exception as login_error:
+                logger.error(f"[LOGIN] Regular login failed: {login_error}")
+                raise Exception("regular_login_failed")
+
+        # Check final result after either welcome back or regular login
+        current_url = driver.current_url.lower()
         title = driver.title.lower()
-        
-        logger.info(f"[LOGIN] After login attempt - URL: {current_url}")
+        page_source = driver.page_source
+
+        logger.info(f"[LOGIN] Final check - URL: {current_url}")
+        logger.info(f"[LOGIN] Final check - Title: {title}")
 
         if "feed" in current_url:
             save_cookies(driver, cookie_path)
-            logger.info(f"[LOGIN] Direct login success: {EMAIL}")
+            logger.info(f"[LOGIN] ✅ Direct login success: {EMAIL}")
             return driver
-            
+        
         elif "checkpoint" in current_url or "verify" in title or "security" in title:
             logger.warning(f"[CAPTCHA DETECTED] For: {EMAIL}")
             
-            # NEW: Save session data for automatic transfer to NEW docker manager
+            # Save session data for automatic transfer to NEW docker manager
             logger.info("Saving session data for NEW docker manager VNC transfer...")
             if save_captcha_session_for_transfer(driver, EMAIL):
                 logger.info("Session data saved successfully for NEW docker system")
             else:
                 logger.warning("⚠️ Failed to save session data - VNC will use fallback mode")
             
-            # NEW: Use the enhanced captcha handler with NEW docker manager
+            # Use the enhanced captcha handler with NEW docker manager
             captcha_handler = FullyAutomatedCaptchaHandler(
                 auto_open_browser=True,  # Auto-open browser to VNC
                 timeout=900  # 15 minutes timeout
@@ -362,8 +438,6 @@ def get_logged_driver(retry_count=3):
             logger.info("   Zero manual navigation required")
             logger.info("   Real-time monitoring and auto-cleanup")
             
-            # NEW: This uses FullyAutomatedCaptchaHandler.solve_captcha() 
-            #         which internally uses AutomatedCaptchaHandler and ScalableCaptchaManager
             logger.info("🚀 Starting VNC CAPTCHA solving process...")
             captcha_result = captcha_handler.solve_captcha(EMAIL, cred_id)
             
@@ -389,9 +463,9 @@ def get_logged_driver(retry_count=3):
                             return driver
                         else:
                             logger.error("❌ All recovery methods failed")
-                            # Continue with existing fallback logic below...
                 else:
                     logger.warning("⚠️ VNC CAPTCHA solving timeout or failed")
+                
                 # Try refreshing current session
                 try:
                     driver.refresh()
@@ -435,11 +509,12 @@ def get_logged_driver(retry_count=3):
                 raise Exception("new_docker_captcha_timeout")
 
         elif "login" in current_url:
-            credential.mark_invalid(reason="bad_login")
-            raise Exception("bad_login")
+            logger.warning(f"[LOGIN] Still on login page, form submission may have failed")
+            raise Exception("login_form_submission_failed")
+            
         else:
-            credential.mark_invalid(reason="unknown")
-            raise Exception("unknown")
+            logger.warning(f"[LOGIN] Unknown state after login attempt: {current_url}")
+            raise Exception("unknown_post_login_state")
 
     except Exception as e:
         logger.error(f"[LOGIN ERROR] {e}")
@@ -469,7 +544,6 @@ def get_logged_driver(retry_count=3):
         else:
             raise
 
-# NEW: Additional utility function to check NEW docker manager status
 def get_captcha_manager_status():
     """Get status of the NEW docker manager"""
     try:

@@ -92,3 +92,4 @@ b2b_linkedin/b2b_linkedin_app/parser/logs/*.html
 
 # Ignore shared runtime files
 b2b_linkedin/b2b_linkedin_app/shared_volume/
+staticfiles/

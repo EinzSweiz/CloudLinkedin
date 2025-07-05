@@ -1,0 +1,412 @@
+/* Beautiful Centered White Login Form - Clean & Modern */
+
+/* Reset and base styling */
+* {
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Body with white background and perfect centering */
+body,
+body.login,
+html {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    background: #ffffff !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    position: relative !important;
+}
+
+/* Subtle background pattern for elegance */
+body::before,
+body.login::before {
+    content: '' !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: 
+        radial-gradient(circle at 25% 25%, rgba(99, 102, 241, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(139, 92, 246, 0.03) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(99, 102, 241, 0.01) 0%, rgba(139, 92, 246, 0.01) 100%) !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Force all containers to center */
+#container,
+#content,
+#login,
+.login-container,
+.login-form-container,
+main,
+.content,
+[class*="container"],
+[class*="login"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+    background: none !important;
+    padding: 20px !important;
+    margin: 0 !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Beautiful form container */
+form,
+.login-form,
+.auth-form {
+    background: #ffffff !important;
+    border-radius: 24px !important;
+    padding: 48px !important;
+    box-shadow: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04),
+        0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+    width: 100% !important;
+    max-width: 420px !important;
+    position: relative !important;
+    z-index: 10 !important;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    border: 1px solid rgba(229, 231, 235, 0.8) !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 24px !important;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header styling */
+form::before {
+    content: "Welcome back to\ALinkedin Parser" !important;
+    white-space: pre-line !important;
+    display: block !important;
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    text-align: center !important;
+    margin-bottom: 8px !important;
+    letter-spacing: -0.5px !important;
+    line-height: 1.2 !important;
+}
+
+/* Subtitle */
+form::after {
+    content: "Sign in to your account" !important;
+    display: block !important;
+    color: #6b7280 !important;
+    text-align: center !important;
+    margin-bottom: 32px !important;
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+}
+
+/* Form field containers */
+.form-row,
+.field-wrapper,
+.input-group,
+div:has(> input),
+div:has(> label) {
+    position: relative !important;
+    margin-bottom: 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+
+/* Label styling */
+label {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    margin-bottom: 6px !important;
+    transition: color 0.2s ease !important;
+    display: block !important;
+}
+
+/* Input field styling */
+input[type="text"],
+input[type="email"], 
+input[type="password"],
+input[type="username"],
+.form-control {
+    width: 100% !important;
+    padding: 16px 20px !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    font-size: 16px !important;
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-family: inherit !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+}
+
+input::placeholder {
+    color: #9ca3af !important;
+    font-weight: 400 !important;
+}
+
+input:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+    transform: translateY(-1px) !important;
+}
+
+input:focus + label {
+    color: #6366f1 !important;
+}
+
+/* Button styling */
+button[type="submit"],
+input[type="submit"],
+.btn,
+.btn-primary {
+    width: 100% !important;
+    padding: 16px 24px !important;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.3) !important;
+    margin-top: 8px !important;
+}
+
+button[type="submit"]:hover,
+input[type="submit"]:hover,
+.btn:hover,
+.btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px 0 rgba(99, 102, 241, 0.4) !important;
+    background: linear-gradient(135deg, #5855eb 0%, #7c3aed 100%) !important;
+}
+
+button[type="submit"]:active,
+input[type="submit"]:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.3) !important;
+}
+
+/* Error messages */
+.error,
+.errorlist,
+.alert-danger,
+.errornote {
+    background: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    border-left: 4px solid #ef4444 !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    margin: 8px 0 !important;
+    color: #dc2626 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    list-style: none !important;
+    animation: slideInError 0.3s ease-out !important;
+}
+
+.errorlist li {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.error::before,
+.errorlist::before,
+.errornote::before {
+    content: '⚠ ' !important;
+    font-weight: 600 !important;
+}
+
+@keyframes slideInError {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Register link styling */
+.register-link,
+.additional-links {
+    text-align: center !important;
+    margin-top: 32px !important;
+    padding-top: 24px !important;
+    border-top: 1px solid #e5e7eb !important;
+    position: relative !important;
+}
+
+.register-link a,
+.additional-links a {
+    color: #6366f1 !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    display: inline-block !important;
+}
+
+.register-link a:hover,
+.additional-links a:hover {
+    color: #4f46e5 !important;
+    background: rgba(99, 102, 241, 0.05) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Submit row styling */
+.submit-row {
+    margin-top: 24px !important;
+    display: flex !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+}
+
+/* Hide admin elements */
+#header,
+.branding,
+.breadcrumbs,
+#nav-sidebar {
+    display: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+    body,
+    body.login {
+        padding: 16px !important;
+    }
+    
+    form {
+        padding: 36px 24px !important;
+        border-radius: 20px !important;
+        max-width: 95% !important;
+    }
+    
+    form::before {
+        font-size: 24px !important;
+    }
+    
+    form::after {
+        font-size: 15px !important;
+        margin-bottom: 28px !important;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="username"] {
+        padding: 14px 18px !important;
+        font-size: 16px !important;
+    }
+    
+    button[type="submit"],
+    input[type="submit"] {
+        padding: 14px 20px !important;
+        font-size: 15px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    form {
+        padding: 32px 20px !important;
+        border-radius: 16px !important;
+    }
+    
+    form::before {
+        font-size: 22px !important;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus visible for better keyboard navigation */
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid #6366f1 !important;
+    outline-offset: 2px !important;
+}
+
+/* Auto-fill styling */
+input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+    -webkit-text-fill-color: #1f2937 !important;
+}
+
+/* Smooth transitions */
+* {
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Force override any conflicting styles */
+body * {
+    box-sizing: border-box !important;
+}
+
+/* Additional centering insurance */
+.login-wrapper,
+.form-wrapper,
+.auth-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+}
+
+/* Ensure form fields are properly spaced */
+form > div,
+form > .form-row {
+    margin-bottom: 20px !important;
+}
+
+form > div:last-of-type,
+form > .form-row:last-of-type {
+    margin-bottom: 0 !important;
+}

@@ -11,11 +11,11 @@ class PaidPermissionAdmin(admin.ModelAdmin):
         return request.user.is_superuser
 
     def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser or getattr(request.user, "is_paid", False)
+        return request.user.is_superuser
 
     def has_delete_permission(self, request, obj=None):
-        return request.user.is_superuser or getattr(request.user, "is_paid", False)
-
+        return request.user.is_superuser
+    
     def get_model_perms(self, request):
         """
         Убирает кнопку "Add" справа в админке, если нет прав на добавление

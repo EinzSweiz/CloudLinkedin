@@ -1,0 +1,344 @@
+/* ==========================================================================
+   DJANGO UNFOLD FORM ENHANCEMENTS - Fixed Version
+   ========================================================================== */
+
+/* Increase specificity to override Unfold styles */
+.main-content .form-row,
+.main-content .field-box,
+.form-row,
+.field-box,
+div[class*="field-"] {
+    background: #ffffff !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 24px !important;
+    margin: 16px 0 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+}
+
+.main-content .form-row:hover,
+.main-content .field-box:hover,
+.form-row:hover,
+.field-box:hover,
+div[class*="field-"]:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+    transform: translateY(-2px) !important;
+    border-color: #3b82f6 !important;
+}
+
+/* Enhanced Labels with better visibility */
+.form-row label,
+.field-box label,
+label,
+div[class*="field-"] label {
+    display: block !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    color: #1f2937 !important;
+    margin-bottom: 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.8px !important;
+    position: relative !important;
+    padding-left: 8px !important;
+}
+
+.form-row label::before,
+.field-box label::before,
+label::before,
+div[class*="field-"] label::before {
+    content: '' !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 4px !important;
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+    border-radius: 2px !important;
+}
+
+/* Input Fields with strong visibility */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+input[type="date"],
+input[type="datetime-local"],
+textarea,
+select,
+.form-control {
+    width: 100% !important;
+    padding: 16px 20px !important;
+    border: 3px solid #d1d5db !important;
+    border-radius: 10px !important;
+    font-size: 16px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
+    background: #f8fafc !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-sizing: border-box !important;
+    font-weight: 500 !important;
+    color: #1f2937 !important;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus,
+select:focus,
+.form-control:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.15) !important;
+    background: #ffffff !important;
+    outline: none !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Placeholder styling for better visibility */
+input::placeholder,
+textarea::placeholder {
+    color: #9ca3af !important;
+    font-style: italic !important;
+    opacity: 0.8 !important;
+}
+
+/* Textarea with better visibility */
+textarea {
+    min-height: 140px !important;
+    max-height: 400px !important;
+    resize: vertical !important;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace !important;
+    line-height: 1.6 !important;
+}
+
+/* Code/Template textareas */
+textarea[name*="template"],
+textarea[name*="html"],
+textarea[name*="code"] {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+    border: 3px solid #334155 !important;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace !important;
+    font-size: 14px !important;
+    min-height: 250px !important;
+    line-height: 1.7 !important;
+}
+
+textarea[name*="template"]:focus,
+textarea[name*="html"]:focus,
+textarea[name*="code"]:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Select dropdowns with better styling */
+select,
+.form-control select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23374151' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 16px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 20px !important;
+    padding-right: 50px !important;
+    appearance: none !important;
+    cursor: pointer !important;
+}
+
+select:hover,
+.form-control select:hover {
+    border-color: #6b7280 !important;
+    background-color: #ffffff !important;
+}
+
+/* Help text with better visibility */
+.help,
+.helptext,
+.form-text {
+    display: block !important;
+    margin-top: 10px !important;
+    font-size: 13px !important;
+    color: #6b7280 !important;
+    font-style: italic !important;
+    padding: 12px 16px !important;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+    border-radius: 8px !important;
+    border-left: 4px solid #3b82f6 !important;
+    line-height: 1.5 !important;
+}
+
+/* Required field indicators */
+.required label::after,
+label.required::after {
+    content: ' *' !important;
+    color: #ef4444 !important;
+    font-weight: bold !important;
+    font-size: 18px !important;
+}
+
+/* Error styling with high visibility */
+.errorlist,
+.invalid-feedback {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%) !important;
+    border: 2px solid #fca5a5 !important;
+    border-radius: 10px !important;
+    padding: 16px !important;
+    margin: 12px 0 !important;
+    list-style: none !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1) !important;
+}
+
+.errorlist li,
+.invalid-feedback {
+    color: #dc2626 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.errors input,
+.errors textarea,
+.errors select,
+.is-invalid {
+    border-color: #ef4444 !important;
+    background: #fef2f2 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Submit buttons area */
+.submit-row,
+.form-actions {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    padding: 24px !important;
+    margin: 24px 0 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+    border: 2px solid #e2e8f0 !important;
+    text-align: right !important;
+}
+
+/* Button styling */
+input[type="submit"],
+button[type="submit"],
+.btn-primary,
+.button {
+    background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%) !important;
+    color: white !important;
+    border: none !important;
+    padding: 14px 28px !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+input[type="submit"]:hover,
+button[type="submit"]:hover,
+.btn-primary:hover,
+.button:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Fieldset styling */
+fieldset,
+.fieldset {
+    border: none !important;
+    margin: 0 0 24px 0 !important;
+    padding: 0 !important;
+}
+
+fieldset.module,
+.module {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 32px !important;
+    margin: 20px 0 !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1) !important;
+    border: 2px solid #e2e8f0 !important;
+}
+
+fieldset h2,
+fieldset.module h2,
+.module h2 {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
+    color: white !important;
+    margin: -32px -32px 24px -32px !important;
+    padding: 20px 32px !important;
+    border-radius: 16px 16px 0 0 !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+/* File upload styling */
+input[type="file"] {
+    padding: 20px !important;
+    border: 3px dashed #d1d5db !important;
+    border-radius: 12px !important;
+    background: #f9fafb !important;
+    width: 100% !important;
+    transition: all 0.3s ease !important;
+    text-align: center !important;
+    font-weight: 500 !important;
+}
+
+input[type="file"]:hover {
+    border-color: #3b82f6 !important;
+    background: #eff6ff !important;
+}
+
+/* Checkbox and radio styling */
+input[type="checkbox"],
+input[type="radio"] {
+    width: 20px !important;
+    height: 20px !important;
+    margin-right: 12px !important;
+    transform: scale(1.3) !important;
+    accent-color: #3b82f6 !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .form-row,
+    .field-box,
+    div[class*="field-"] {
+        margin: 12px 0 !important;
+        padding: 20px !important;
+    }
+    
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="url"],
+    input[type="number"],
+    textarea,
+    select {
+        padding: 14px 16px !important;
+        font-size: 16px !important; /* Prevents zoom on iOS */
+    }
+}
+
+/* Additional Unfold-specific overrides */
+.unfold-main,
+.main-content,
+#main {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+}
+
+/* Force visibility on all form elements */
+.form-row *,
+.field-box *,
+div[class*="field-"] * {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
